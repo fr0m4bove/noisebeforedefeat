@@ -5,23 +5,32 @@
   justify-content: center;
   min-height: calc(100vh - var(--nav-height));
   color: #E9D8A1;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .title {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: #E9D8A1;
+  font-size: 2rem;
 }
 
 .error-message {
-  color: red;
-  margin-bottom: 15px;
+  color: #e57373;
+  margin-bottom: 20px;
+  text-align: center;
+  padding: 10px;
+  background: rgba(229, 115, 115, 0.1);
+  border-radius: 4px;
+  width: 100%;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  width: 300px;
-  gap: 15px;
+  width: 100%;
+  gap: 25px;
 }
 
 .form-group {
@@ -30,19 +39,32 @@
 }
 
 .form-group label {
-  position: absolute;
-  top: -20px;
+  display: block;
+  margin-bottom: 8px;
   color: #E9D8A1;
+  font-size: 0.9rem;
 }
 
 .form-input {
   width: 100%;
-  background-color: transparent;
-  border: 2px solid #795548;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(233, 216, 161, 0.3);
   border-radius: 8px;
   color: #E9D8A1;
-  padding: 10px;
+  padding: 12px;
   box-sizing: border-box;
+  transition: border-color 0.3s ease;
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #E9D8A1;
+}
+
+.form-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .submit-button {
@@ -50,9 +72,15 @@
   color: #E9D8A1;
   border: none;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
   cursor: pointer;
+  font-size: 1rem;
   margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.submit-button:hover {
+  background-color: #8D6E63;
 }
 
 .submit-button:disabled {
@@ -61,24 +89,31 @@
 }
 
 .alternate-login {
-  margin-top: 20px;
+  margin-top: 30px;
   text-align: center;
-  width: 300px;
+  width: 100%;
 }
 
 .alternate-login p {
   color: #E9D8A1;
   margin-bottom: 10px;
+  font-size: 0.9rem;
 }
 
 .google-button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background-color: #795548;
   color: #E9D8A1;
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.google-button:hover {
+  background-color: #8D6E63;
 }
 
 .google-button:disabled {
@@ -89,6 +124,7 @@
 .account-toggle {
   margin-top: 20px;
   color: #E9D8A1;
+  text-align: center;
 }
 
 .toggle-button {
@@ -97,8 +133,22 @@
   color: #E9D8A1;
   text-decoration: underline;
   cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  margin-left: 5px;
+}
+
+.toggle-button:hover {
+  color: #FFECB3;
 }
 
 .toggle-button:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+@media (max-width: 500px) {
+  .login-container {
+    padding: 0 20px;
+  }
 }

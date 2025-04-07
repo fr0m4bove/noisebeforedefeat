@@ -1,61 +1,28 @@
-// src/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBR2ReY-IvGoJ_7uxDLfE_RF1uuYrNZoJk",
+  apiKey: "AIzaszm82heY-IvGcJ_7wIhlFE_BFiuuY-NZcJk",
   authDomain: "noise-before-defeat.firebaseapp.com",
   projectId: "noise-before-defeat",
   storageBucket: "noise-before-defeat.firebasestorage.app",
-  messagingSenderId: "265443815788",
-  appId: "1:265443815788:web:b385e9edb02d5099ab0349",
-  measurementId: "G-X5DJBN8T9D"
+  messagingSenderId: "2654438157788",
+  appId: "1:2654438157788:web:b385e9edb4zd5099ab8349",
+  measurementId: "G-X5DJBNBT9D"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
 
-// Google Sign In
-export const signInWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return { user: result.user, error: null };
-  } catch (error) {
-    return { user: null, error: error.message };
-  }
-};
-
-// Email/Password Sign Up
-export const signUpWithEmail = async (email, password) => {
-  try {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    return { user: result.user, error: null };
-  } catch (error) {
-    return { user: null, error: error.message };
-  }
-};
-
-// Email/Password Sign In
-export const signInWithEmail = async (email, password) => {
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return { user: result.user, error: null };
-  } catch (error) {
-    return { user: null, error: error.message };
-  }
-};
-
-// Sign Out
-export const signOut = async () => {
-  try {
-    await auth.signOut();
-    return { error: null };
-  } catch (error) {
-    return { error: error.message };
-  }
-};
+// Set persistence to LOCAL (survives browser restarts)
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Persistence set to local");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
 
 export { auth };

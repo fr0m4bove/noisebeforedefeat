@@ -5,6 +5,9 @@
   --chess-green-dark: #5c7a43;
   --chess-dark: #121a28;
   --nav-height: 60px;
+  --accent-color: #E9D8A1;
+  --button-color: #795548;
+  --card-bg: rgba(255, 255, 255, 0.03);
 }
 
 body {
@@ -12,7 +15,7 @@ body {
   padding: 0;
   font-family: 'Exo 2', sans-serif;
   background-color: var(--chess-dark);
-  color: var(--chess-tan);
+  color: var(--accent-color);
 }
 
 .app-container {
@@ -25,7 +28,7 @@ body {
 /* Top Navigation - transparent */
 .top-nav {
   background-color: transparent; 
-  color: var(--chess-tan);
+  color: var(--accent-color);
   height: var(--nav-height);
   position: fixed;
   top: 0;
@@ -37,16 +40,26 @@ body {
 
 .nav-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   height: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  margin-right: 50px;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
   height: 100%;
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-item {
@@ -55,7 +68,7 @@ body {
   height: 100%;
   padding: 0 30px;
   text-decoration: none;
-  color: var(--chess-tan);
+  color: var(--accent-color);
   font-size: 1.1rem;
   transition: all 0.2s ease;
 }
@@ -70,35 +83,125 @@ body {
   border-bottom: 2px solid var(--chess-green);
 }
 
-/* Main Content Area - removed visible border */
+/* Special styling for Feedback tab in active state */
+.nav-item:nth-child(5).active {
+  background-color: rgba(118, 150, 86, 0.1);
+  border-bottom: 2px solid var(--chess-green);
+  border-radius: 4px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.username-display {
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.sign-out-button {
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-out-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main Content Area */
 .content {
   flex-grow: 1;
-  padding: 20px;
-  margin-top: var(--nav-height);
+  padding: 80px 20px 20px 20px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: calc(100vh - var(--nav-height));
-  /* Remove any box-shadow, border, or background that might be creating the visible border */
+  width: 100%;
+  box-sizing: border-box;
   border: none;
   box-shadow: none;
   background: transparent;
 }
 
+/* Buttons */
+.action-button {
+  background-color: var(--button-color);
+  color: var(--accent-color);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Container sizing */
+.dashboard-container, 
+.home-container, 
+.about-container, 
+.feedback-container, 
+.leaderboard-container,
+.login-container {
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Loading container */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: var(--accent-color);
+}
+
 /* For mobile responsiveness */
 @media (max-width: 768px) {
   .nav-container {
-    justify-content: space-around;
+    flex-direction: column;
+    padding-bottom: 10px;
+  }
+  
+  .nav-brand {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 10px;
   }
   
   .nav-links {
     width: 100%;
     justify-content: space-between;
+    overflow-x: auto;
   }
   
   .nav-item {
     padding: 0 15px;
     font-size: 0.9rem;
+  }
+  
+  .user-info {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .content {
+    padding-top: 120px;
   }
 }

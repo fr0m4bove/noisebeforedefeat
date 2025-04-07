@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  updateProfile 
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { useAuth } from './AuthContext';
@@ -13,6 +14,7 @@ import './Login.css';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +37,15 @@ function Login() {
     try {
       if (isSignUp) {
         // Sign up logic
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // If username provided, update the profile
+        if (username.trim()) {
+          await updateProfile(userCredential.user, {
+            displayName: username
+          });
+        }
+        
         alert('Account created successfully!');
       } else {
         // Sign in logic
@@ -90,6 +100,19 @@ function Login() {
       {error && <p className="error-message">{error}</p>}
       
       <form onSubmit={handleEmailSubmit} className="login-form">
+        {isSignUp && (
+          <div className="form-group">
+            <label htmlFor="username">Username:</label>
+            <input 
+              type="text" 
+              id="username"
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              className="form-input"
+            />
+          </div>
+        )}
+        
         <div className="form-group">
           <label htmlFor="email">Email:</label>
           <input 
@@ -102,6 +125,7 @@ function Login() {
             className="form-input"
           />
         </div>
+        
         <div className="form-group">
           <label htmlFor="password">Password:</label>
           <input 
@@ -114,6 +138,7 @@ function Login() {
             className="form-input"
           />
         </div>
+        
         <button 
           type="submit"
           disabled={isLoading}
@@ -134,7 +159,7 @@ function Login() {
         </button>
       </div>
       
-      <p className="account-toggle">
+      <div className="account-toggle">
         {isSignUp 
           ? 'Already have an account? ' 
           : 'Don\'t have an account? '}
@@ -145,7 +170,7 @@ function Login() {
         >
           {isSignUp ? 'Log In' : 'Sign Up'}
         </button>
-      </p>
+      </div>
     </div>
   );
 }

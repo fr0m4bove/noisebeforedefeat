@@ -1,21 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './NoiseBeforeDefeat.css';
 
-const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
+const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) => {
   // Game constants
   const GRID_SIZE = 8;
   const CELL_SIZE = 50;
   const MAX_INFANTRY = 90;
   const MIN_GROUP_SIZE = 10;
+  
+  // Movement animation duration (ms)
+  const MOVE_ANIMATION_DURATION = 500;
+
+  // Board colors
+  const LIGHT_CELL_COLOR = '#A3D3D6'; // Light blue
+  const DARK_CELL_COLOR = '#FF9966';  // Dull orange
+  const CENTER_CELL_COLOR = '#75BBCB80'; // Semi-transparent blue
+  const HIGHLIGHT_COLOR = 'rgba(150, 150, 150, 0.5)'; // Gray for valid moves
 
   // Initial game state
   const initialGameState = {
     turn: 1,
     phase: "planning", // planning, executing, or gameOver
     timer: gameMode === "flash" ? 40 : null,
-    activePlayer: null, // For local testing, will be set by server in multiplayer
+    activePlayer: 'p1', // For local testing, will be set by server in multiplayer
     players: {
       p1: {
+        username: currentUser?.displayName || "Player 1",
         intelPoints: 100,
         nodes: {
           core: { 
@@ -49,6 +59,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         ready: false
       },
       p2: {
+        username: "Player 2", // Will be replaced with opponent's name in multiplayer
         intelPoints: 100,
         nodes: {
           core: { 
@@ -83,6 +94,9 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
       }
     },
     selectedPiece: null,
+    splitPiece: null,
+    validMoves: [],
+    movingPiece: null,
     gameLog: []
   };
 
@@ -91,7 +105,9 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
   const [showSplitPopup, setShowSplitPopup] = useState(false);
   const [splitAmount, setSplitAmount] = useState(0);
   const [splitGroupId, setSplitGroupId] = useState(null);
+  const [animations, setAnimations] = useState({});
   const timerRef = useRef(null);
+  const svgRef = useRef(null);
 
   // Execute all moves from both players
   const executeAllMoves = useCallback(() => {
@@ -156,6 +172,17 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
     }
   }, [gameState.players.p1.ready, gameState.players.p2.ready, executeAllMoves, gameState.phase, gameState.players]);
 
+  // Effect for animation cleanup
+  useEffect(() => {
+    const animationTimeout = setTimeout(() => {
+      if (Object.keys(animations).length > 0) {
+        setAnimations({});
+      }
+    }, MOVE_ANIMATION_DURATION);
+    
+    return () => clearTimeout(animationTimeout);
+  }, [animations]);
+
   // Grid to SVG coordinate conversion
   const gridToSvg = (x, y) => {
     const svgX = (GRID_SIZE * CELL_SIZE) + (x * CELL_SIZE);
@@ -168,65 +195,186 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
     return Math.abs(x) + Math.abs(y) <= GRID_SIZE;
   };
 
-  // Handle clicking on a cell
-  const handleCellClick = (x, y) => {
-    const position = { x, y };
-    // If no piece is selected, try to select one
-    if (!gameState.selectedPiece) {
-      const playerId = gameState.activePlayer;
-      if (!playerId) return;
-      
-      // Check if player's infantry is at this position
-      const infantry = gameState.players[playerId].infantry.find(inf => 
-        inf.position.x === x && inf.position.y === y);
-      
-      if (infantry) {
-        setGameState(prev => ({
-          ...prev,
-          selectedPiece: { id: infantry.id, type: "infantry" }
-        }));
+  // Convert grid coordinates to chess notation
+  const gridToChessNotation = (x, y) => {
+    // Convert x to letter (a-i)
+    const file = String.fromCharCode(97 + (x + GRID_SIZE));
+    // Convert y to number (1-9)
+    const rank = GRID_SIZE - y;
+    return { file, rank };
+  };
+
+  // Check if a cell is occupied
+  const isCellOccupied = (x, y) => {
+    // Check both players' infantry and other pieces
+    for (const playerId of ['p1', 'p2']) {
+      // Check infantry positions
+      if (gameState.players[playerId].infantry.some(inf => 
+        inf.position.x === x && inf.position.y === y)) {
+        return true;
       }
-    } else {
-      // A piece is selected, check if this is a valid move
-      const { selectedPiece } = gameState;
-      const playerId = gameState.activePlayer;
       
-      if (selectedPiece.type === "infantry") {
-        const infantry = gameState.players[playerId].infantry.find(inf => 
-          inf.id === selectedPiece.id);
-        
-        // Check if target position is adjacent
-        const dx = Math.abs(infantry.position.x - x);
-        const dy = Math.abs(infantry.position.y - y);
-        
-        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-          // Valid move - add to pending moves
-          setGameState(prev => {
-            const updatedPendingMoves = [
-              ...prev.players[playerId].pendingMoves,
-              { 
-                type: "move", 
-                pieceId: selectedPiece.id, 
-                from: infantry.position, 
-                to: position 
-              }
-            ];
-            
-            return {
-              ...prev,
-              selectedPiece: null,
-              players: {
-                ...prev.players,
-                [playerId]: {
-                  ...prev.players[playerId],
-                  pendingMoves: updatedPendingMoves
-                }
-              }
-            };
-          });
+      // Check node positions
+      for (const nodeType in gameState.players[playerId].nodes) {
+        const node = gameState.players[playerId].nodes[nodeType];
+        if (node.position.x === x && node.position.y === y) {
+          return true;
         }
       }
+      
+      // Check long range unit position
+      const longRange = gameState.players[playerId].longRange;
+      if (longRange.position.x === x && longRange.position.y === y) {
+        return true;
+      }
     }
+    
+    return false;
+  };
+
+  // Get valid adjacent moves for a position
+  const getValidMoves = (position) => {
+    const { x, y } = position;
+    const directions = [
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 }
+    ];
+    
+    return directions
+      .map(dir => ({ x: x + dir.x, y: y + dir.y }))
+      .filter(pos => isValidPosition(pos.x, pos.y) && !isCellOccupied(pos.x, pos.y));
+  };
+
+  // Handle clicking on a cell for movement
+  const handleCellClick = (x, y) => {
+    const position = { x, y };
+    const playerId = gameState.activePlayer;
+    
+    // If we have a split piece waiting for placement
+    if (gameState.splitPiece) {
+      // Check if this is a valid move for the split piece
+      if (gameState.validMoves.some(move => move.x === x && move.y === y)) {
+        // Move the split piece to the new position
+        createSplitUnit(position);
+        
+        // Clear valid moves and split piece state
+        setGameState(prev => ({
+          ...prev,
+          splitPiece: null,
+          validMoves: []
+        }));
+      }
+      return;
+    }
+    
+    // If we have a selected piece waiting for a move command
+    if (gameState.selectedPiece) {
+      // Check if this is a valid move
+      if (gameState.validMoves.some(move => move.x === x && move.y === y)) {
+        // Move the piece
+        movePiece(gameState.selectedPiece, position);
+      } else {
+        // Deselect the piece if clicking elsewhere
+        setGameState(prev => ({
+          ...prev,
+          selectedPiece: null,
+          validMoves: []
+        }));
+      }
+      return;
+    }
+    
+    // If no piece is selected, check if there's a piece at this position
+    if (!playerId) return;
+    
+    // Check for infantry
+    const infantry = gameState.players[playerId].infantry.find(inf => 
+      inf.position.x === x && inf.position.y === y);
+    
+    if (infantry) {
+      // Get valid moves for this infantry
+      const validMoves = getValidMoves(infantry.position);
+      
+      // Select the infantry and show valid moves
+      setGameState(prev => ({
+        ...prev,
+        selectedPiece: { id: infantry.id, type: "infantry" },
+        validMoves
+      }));
+      return;
+    }
+    
+    // Check for long range unit
+    const longRange = gameState.players[playerId].longRange;
+    if (longRange.position.x === x && longRange.position.y === y) {
+      // Get valid moves for long range unit
+      const validMoves = getValidMoves(longRange.position);
+      
+      // Select the long range unit and show valid moves
+      setGameState(prev => ({
+        ...prev,
+        selectedPiece: { id: `${playerId}-longrange`, type: "longrange" },
+        validMoves
+      }));
+      return;
+    }
+  };
+
+  // Move a piece to a new position
+  const movePiece = (piece, newPosition) => {
+    const playerId = gameState.activePlayer;
+    
+    // Start the animation
+    setAnimations(prev => ({
+      ...prev,
+      [piece.id]: {
+        fromPosition: null, // Will be set by the rendering function
+        toPosition: newPosition
+      }
+    }));
+    
+    // After a brief delay for the animation to complete
+    setTimeout(() => {
+      setGameState(prev => {
+        let updatedState = { ...prev };
+        
+        if (piece.type === "infantry") {
+          // Update infantry position
+          updatedState.players[playerId].infantry = prev.players[playerId].infantry.map(inf => {
+            if (inf.id === piece.id) {
+              return { ...inf, position: newPosition };
+            }
+            return inf;
+          });
+          
+          // Add to move log
+          updatedState.gameLog = [
+            ...prev.gameLog,
+            `${prev.players[playerId].username} moved infantry to ${newPosition.x},${newPosition.y}`
+          ];
+        } else if (piece.type === "longrange") {
+          // Update long range position
+          updatedState.players[playerId].longRange = {
+            ...prev.players[playerId].longRange,
+            position: newPosition
+          };
+          
+          // Add to move log
+          updatedState.gameLog = [
+            ...prev.gameLog,
+            `${prev.players[playerId].username} moved long range unit to ${newPosition.x},${newPosition.y}`
+          ];
+        }
+        
+        // Clear selection and valid moves
+        updatedState.selectedPiece = null;
+        updatedState.validMoves = [];
+        
+        return updatedState;
+      });
+    }, MOVE_ANIMATION_DURATION);
   };
 
   // Handle right-click on infantry for splitting
@@ -252,58 +400,110 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
     }
     
     const playerId = gameState.activePlayer;
+    const infantry = gameState.players[playerId].infantry.find(inf => inf.id === splitGroupId);
+    const remainingCount = infantry.count - splitAmount;
+    
+    if (remainingCount < MIN_GROUP_SIZE) {
+      setShowSplitPopup(false);
+      return;
+    }
+    
+    // Update the original group with reduced count
     setGameState(prev => {
-      const infantry = prev.players[playerId].infantry.find(inf => inf.id === splitGroupId);
-      const remainingCount = infantry.count - splitAmount;
+      const updatedInfantry = prev.players[playerId].infantry.map(inf => {
+        if (inf.id === splitGroupId) {
+          return {
+            ...inf,
+            count: remainingCount,
+            hp: remainingCount * 2,
+            maxHp: remainingCount * 2
+          };
+        }
+        return inf;
+      });
       
-      if (remainingCount < MIN_GROUP_SIZE) {
-        setShowSplitPopup(false);
-        return prev;
-      }
-      
-      // Create a new infantry group
-      const newInfantryId = `${playerId}-inf-${Date.now()}`;
-      const newInfantry = {
-        id: newInfantryId,
-        position: { ...infantry.position },
-        count: splitAmount,
-        hp: splitAmount * 2, // 2 HP per unit
-        maxHp: splitAmount * 2
-      };
-      
-      // Update the original group
-      const updatedInfantry = {
-        ...infantry,
-        count: remainingCount,
-        hp: remainingCount * 2,
-        maxHp: remainingCount * 2
-      };
-      
-      const updatedInfantryList = prev.players[playerId].infantry.map(inf => 
-        inf.id === splitGroupId ? updatedInfantry : inf
-      );
-      
-      // Add the new group
-      updatedInfantryList.push(newInfantry);
-      
+      // Set up the split unit for placement
       return {
         ...prev,
+        splitPiece: {
+          parentId: splitGroupId,
+          count: splitAmount,
+          hp: splitAmount * 2,
+          maxHp: splitAmount * 2
+        },
+        validMoves: getValidMoves(infantry.position),
         players: {
           ...prev.players,
           [playerId]: {
             ...prev.players[playerId],
-            infantry: updatedInfantryList
+            infantry: updatedInfantry
           }
         }
       };
     });
     
+    // Close the split popup
     setShowSplitPopup(false);
+  };
+
+  // Create a new unit from split
+  const createSplitUnit = (position) => {
+    const playerId = gameState.activePlayer;
+    const { parentId, count, hp, maxHp } = gameState.splitPiece;
+    
+    // Generate a unique ID for the new unit
+    const newInfantryId = `${playerId}-inf-${Date.now()}`;
+    
+    // Create animation for the new unit
+    const parentInfantry = gameState.players[playerId].infantry.find(inf => inf.id === parentId);
+    
+    setAnimations(prev => ({
+      ...prev,
+      [newInfantryId]: {
+        fromPosition: parentInfantry.position,
+        toPosition: position
+      }
+    }));
+    
+    // After animation delay, create the new unit
+    setTimeout(() => {
+      setGameState(prev => {
+        // Create the new infantry group
+        const newInfantry = {
+          id: newInfantryId,
+          position,
+          count,
+          hp,
+          maxHp
+        };
+        
+        // Add the new group to the player's infantry
+        return {
+          ...prev,
+          players: {
+            ...prev.players,
+            [playerId]: {
+              ...prev.players[playerId],
+              infantry: [...prev.players[playerId].infantry, newInfantry]
+            }
+          },
+          gameLog: [
+            ...prev.gameLog,
+            `${prev.players[playerId].username} split infantry group (${count} units)`
+          ]
+        };
+      });
+    }, MOVE_ANIMATION_DURATION);
   };
 
   // Generate the grid cells
   const generateGrid = () => {
     const cells = [];
+    
+    // Create board coordinates (chess-style)
+    const ranks = [];
+    const files = [];
+    
     // Create a diamond shape using coordinate limits
     for (let y = -GRID_SIZE; y <= GRID_SIZE; y++) {
       for (let x = -GRID_SIZE; x <= GRID_SIZE; x++) {
@@ -311,6 +511,17 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         if (isValidPosition(x, y)) {
           const { x: svgX, y: svgY } = gridToSvg(x, y);
           const isCenter = x === 0 && y === 0;
+          const isValidMoveTarget = gameState.validMoves.some(move => move.x === x && move.y === y);
+          
+          // Determine cell color
+          let fillColor;
+          if (isValidMoveTarget) {
+            fillColor = HIGHLIGHT_COLOR;
+          } else if (isCenter) {
+            fillColor = CENTER_CELL_COLOR;
+          } else {
+            fillColor = (x + y) % 2 === 0 ? LIGHT_CELL_COLOR : DARK_CELL_COLOR;
+          }
           
           cells.push(
             <rect
@@ -319,32 +530,61 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
               y={svgY - CELL_SIZE/2}
               width={CELL_SIZE}
               height={CELL_SIZE}
-              fill={isCenter ? '#8bc34a80' : ((x + y) % 2 === 0 ? '#f5f5dc' : '#8bc34a')}
-              stroke="#333"
-              strokeWidth="1"
+              fill={fillColor}
+              stroke="none"
               onClick={() => handleCellClick(x, y)}
             />
           );
           
-          // Add coordinate labels for debugging
-          if (x % 2 === 0 && y % 2 === 0) {
-            cells.push(
-              <text
-                key={`text-${x},${y}`}
-                x={svgX}
-                y={svgY}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="10"
-                fill="#333"
-              >
-                {x},{y}
-              </text>
-            );
+          // Collect ranks and files for coordinates
+          if (y === GRID_SIZE && Math.abs(x) <= GRID_SIZE) {
+            const { file } = gridToChessNotation(x, y);
+            files.push({ x, file });
+          }
+          
+          if (x === -GRID_SIZE && Math.abs(y) <= GRID_SIZE) {
+            const { rank } = gridToChessNotation(x, y);
+            ranks.push({ y, rank });
           }
         }
       }
     }
+    
+    // Add coordinate labels (chess style)
+    files.forEach(({ x, file }) => {
+      const { x: svgX, y: svgY } = gridToSvg(x, GRID_SIZE);
+      cells.push(
+        <text
+          key={`file-${file}`}
+          x={svgX}
+          y={svgY + CELL_SIZE}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="12"
+          fill="#333"
+        >
+          {file.toUpperCase()}
+        </text>
+      );
+    });
+    
+    ranks.forEach(({ y, rank }) => {
+      const { x: svgX, y: svgY } = gridToSvg(-GRID_SIZE, y);
+      cells.push(
+        <text
+          key={`rank-${rank}`}
+          x={svgX - CELL_SIZE/2}
+          y={svgY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="12"
+          fill="#333"
+        >
+          {rank}
+        </text>
+      );
+    });
+    
     return cells;
   };
 
@@ -438,15 +678,70 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
   const renderInfantry = () => {
     const units = [];
     
+    // Render split piece placeholder if needed
+    if (gameState.splitPiece) {
+      const playerId = gameState.activePlayer;
+      const parentInfantry = gameState.players[playerId].infantry.find(inf => 
+        inf.id === gameState.splitPiece.parentId);
+      
+      if (parentInfantry) {
+        const { x, y } = parentInfantry.position;
+        const { x: svgX, y: svgY } = gridToSvg(x, y);
+        const playerColor = playerId === 'p1' ? '#5050ff' : '#ff5050';
+        const sizeRatio = gameState.splitPiece.count / MAX_INFANTRY;
+        const radius = Math.max(CELL_SIZE/5, CELL_SIZE/3 * sizeRatio);
+        
+        // Add a pulsing effect to the split piece
+        units.push(
+          <g key="split-placeholder" className="split-placeholder">
+            <circle
+              cx={svgX}
+              cy={svgY}
+              r={radius}
+              fill={playerColor}
+              fillOpacity={0.5}
+              stroke="#ffffff"
+              strokeWidth={2}
+              strokeDasharray="5,5"
+            />
+            <text
+              x={svgX}
+              y={svgY}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="white"
+              fontSize="10"
+              fontWeight="bold"
+            >
+              {gameState.splitPiece.count}
+            </text>
+          </g>
+        );
+      }
+    }
+    
     // Render infantry for both players
     for (const playerId of ['p1', 'p2']) {
       const playerColor = playerId === 'p1' ? '#5050ff' : '#ff5050';
       
       // Render infantry groups
       gameState.players[playerId].infantry.forEach(infantry => {
-        const { x, y } = infantry.position;
+        const { id, position, count } = infantry;
+        let { x, y } = position;
+        
+        // Check if this piece is currently being animated
+        if (animations[id]) {
+          // Use the target position for rendering, animation will handle movement
+          const targetPos = animations[id].toPosition;
+          if (targetPos) {
+            // Don't update actual position yet, just visual position
+            x = targetPos.x;
+            y = targetPos.y;
+          }
+        }
+        
         const { x: svgX, y: svgY } = gridToSvg(x, y);
-        const sizeRatio = infantry.count / MAX_INFANTRY;
+        const sizeRatio = count / MAX_INFANTRY;
         const radius = Math.max(CELL_SIZE/5, CELL_SIZE/3 * sizeRatio);
         const healthPercentage = infantry.hp / infantry.maxHp;
         
@@ -458,14 +753,33 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
           healthColor = '#cccc00'; // Yellow
         }
         
-        // Selected highlight
+        // Selected highlight and animation attributes
         const isSelected = gameState.selectedPiece && 
-                          gameState.selectedPiece.id === infantry.id;
+                          gameState.selectedPiece.id === id;
+        
+        // Calculate animation properties
+        let animationAttrs = {};
+        if (animations[id]) {
+          const fromPos = animations[id].fromPosition || position;
+          const toPos = animations[id].toPosition;
+          
+          if (fromPos && toPos) {
+            const fromSvg = gridToSvg(fromPos.x, fromPos.y);
+            
+            animationAttrs = {
+              style: {
+                animation: `move-piece ${MOVE_ANIMATION_DURATION}ms ease-in-out`,
+                transformOrigin: `${svgX}px ${svgY}px`
+              }
+            };
+          }
+        }
         
         units.push(
           <g 
-            key={infantry.id} 
-            onContextMenu={(e) => handleInfantryRightClick(e, infantry.id)}
+            key={id}
+            onContextMenu={(e) => handleInfantryRightClick(e, id)}
+            {...animationAttrs}
           >
             <circle
               cx={svgX}
@@ -476,9 +790,12 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
               strokeWidth={isSelected ? 3 : 1}
               onClick={() => {
                 if (gameState.activePlayer === playerId) {
+                  // Select this infantry and show valid moves
+                  const validMoves = getValidMoves(position);
                   setGameState(prev => ({
                     ...prev,
-                    selectedPiece: { id: infantry.id, type: "infantry" }
+                    selectedPiece: { id, type: "infantry" },
+                    validMoves
                   }));
                 }
               }}
@@ -492,7 +809,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
               fontSize="10"
               fontWeight="bold"
             >
-              {infantry.count}
+              {count}
             </text>
             {/* Health bar */}
             <rect
@@ -515,7 +832,19 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
       
       // Render long range unit
       const longRange = gameState.players[playerId].longRange;
-      const { x, y } = longRange.position;
+      let { x, y } = longRange.position;
+      
+      // Check if this piece is currently being animated
+      const longRangeId = `${playerId}-longrange`;
+      if (animations[longRangeId]) {
+        // Use the target position for rendering, animation will handle movement
+        const targetPos = animations[longRangeId].toPosition;
+        if (targetPos) {
+          x = targetPos.x;
+          y = targetPos.y;
+        }
+      }
+      
       const { x: svgX, y: svgY } = gridToSvg(x, y);
       const healthPercentage = longRange.hp / longRange.maxHp;
       
@@ -527,16 +856,45 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         healthColor = '#cccc00'; // Yellow
       }
       
+      // Selected highlight
+      const isSelected = gameState.selectedPiece && 
+                        gameState.selectedPiece.id === longRangeId;
+      
+      // Calculate animation properties
+      let animationAttrs = {};
+      if (animations[longRangeId]) {
+        animationAttrs = {
+          style: {
+            animation: `move-piece ${MOVE_ANIMATION_DURATION}ms ease-in-out`,
+            transformOrigin: `${svgX}px ${svgY}px`
+          }
+        };
+      }
+      
       units.push(
-        <g key={`${playerId}-longrange`}>
+        <g 
+          key={longRangeId}
+          {...animationAttrs}
+        >
           <rect
             x={svgX - CELL_SIZE/4}
             y={svgY - CELL_SIZE/4}
             width={CELL_SIZE/2}
             height={CELL_SIZE/2}
             fill={playerColor}
-            stroke="#333"
-            strokeWidth="1"
+            stroke={isSelected ? '#ffffff' : '#333'}
+            strokeWidth={isSelected ? 3 : 1}
+            onClick={() => {
+              if (gameState.activePlayer === playerId) {
+                // Select this long range unit and show valid moves
+                const validMoves = getValidMoves(longRange.position);
+                setGameState(prev => ({
+                  ...prev,
+                  selectedPiece: { id: longRangeId, type: "longrange" },
+                  validMoves
+                }));
+              }
+            }}
           />
           <text
             x={svgX}
@@ -568,6 +926,26 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
       );
     }
     
+    // Render valid move indicators (gray circles)
+    gameState.validMoves.forEach(move => {
+      const { x, y } = move;
+      const { x: svgX, y: svgY } = gridToSvg(x, y);
+      
+      units.push(
+        <circle
+          key={`valid-move-${x},${y}`}
+          cx={svgX}
+          cy={svgY}
+          r={CELL_SIZE/6}
+          fill="#999999"
+          fillOpacity="0.5"
+          stroke="none"
+          onClick={() => handleCellClick(x, y)}
+          className="valid-move-indicator"
+        />
+      );
+    });
+    
     return units;
   };
 
@@ -592,7 +970,9 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
   const toggleActivePlayer = () => {
     setGameState(prev => ({
       ...prev,
-      activePlayer: prev.activePlayer === 'p1' ? 'p2' : 'p1'
+      activePlayer: prev.activePlayer === 'p1' ? 'p2' : 'p1',
+      selectedPiece: null,
+      validMoves: []
     }));
   };
 
@@ -609,13 +989,13 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         
         <div className="player-info">
           <div className={`player p1 ${gameState.activePlayer === 'p1' ? 'active' : ''}`}>
-            <h3>Player 1</h3>
+            <h3>{gameState.players.p1.username}</h3>
             <p>Intel: {gameState.players.p1.intelPoints} IP</p>
             <p>Status: {gameState.players.p1.ready ? 'Ready' : 'Planning'}</p>
           </div>
           
           <div className={`player p2 ${gameState.activePlayer === 'p2' ? 'active' : ''}`}>
-            <h3>Player 2</h3>
+            <h3>{gameState.players.p2.username}</h3>
             <p>Intel: {gameState.players.p2.intelPoints} IP</p>
             <p>Status: {gameState.players.p2.ready ? 'Ready' : 'Planning'}</p>
           </div>
@@ -629,8 +1009,8 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         )}
         
         {/* For testing - toggle active player */}
-        <button onClick={toggleActivePlayer}>
-          Switch to {gameState.activePlayer === 'p1' ? 'Player 2' : 'Player 1'}
+        <button className="switch-player-button" onClick={toggleActivePlayer}>
+          Switch to {gameState.activePlayer === 'p1' ? gameState.players.p2.username : gameState.players.p1.username}
         </button>
         
         <div className="game-log">
@@ -653,6 +1033,9 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
   const renderSplitPopup = () => {
     if (!showSplitPopup) return null;
     
+    const playerId = gameState.activePlayer;
+    const maxSplit = gameState.players[playerId]?.infantry.find(inf => inf.id === splitGroupId)?.count - MIN_GROUP_SIZE || 0;
+    
     return (
       <div className="split-popup">
         <h3>Split Infantry Group</h3>
@@ -660,13 +1043,13 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
         <input 
           type="range" 
           min={MIN_GROUP_SIZE} 
-          max={gameState.players[gameState.activePlayer]?.infantry.find(inf => inf.id === splitGroupId)?.count - MIN_GROUP_SIZE || 0} 
+          max={maxSplit} 
           value={splitAmount}
           onChange={(e) => setSplitAmount(parseInt(e.target.value))}
         />
         <div className="split-amounts">
           <span>New group: {splitAmount}</span>
-          <span>Remaining: {gameState.players[gameState.activePlayer]?.infantry.find(inf => inf.id === splitGroupId)?.count - splitAmount || 0}</span>
+          <span>Remaining: {maxSplit - splitAmount + MIN_GROUP_SIZE}</span>
         </div>
         <div className="split-buttons">
           <button onClick={handleSplitConfirm}>Confirm</button>
@@ -682,18 +1065,21 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd }) => {
 
   return (
     <div className="noise-game-container">
-      <div className="game-board">
-        <svg 
-          width={svgWidth} 
-          height={svgHeight} 
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        >
-          {generateGrid()}
-          {renderNodes()}
-          {renderInfantry()}
-        </svg>
+      <div className="game-layout">
+        {renderUI()}
+        <div className="game-board">
+          <svg 
+            ref={svgRef}
+            width={svgWidth} 
+            height={svgHeight} 
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          >
+            {generateGrid()}
+            {renderNodes()}
+            {renderInfantry()}
+          </svg>
+        </div>
       </div>
-      {renderUI()}
       {renderSplitPopup()}
     </div>
   );

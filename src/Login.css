@@ -1,13 +1,104 @@
 .login-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-height: calc(100vh - var(--nav-height));
-  padding: 0 20px;
-  text-align: center;
+  color: #E9D8A1;
+}
+
+.title {
+  margin-bottom: 20px;
+  color: #E9D8A1;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 15px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  gap: 15px;
+}
+
+.form-group {
+  position: relative;
   width: 100%;
-  background: transparent;
+}
+
+.form-group label {
+  position: absolute;
+  top: -20px;
+  color: #E9D8A1;
+}
+
+.form-input {
+  width: 100%;
+  background-color: transparent;
+  border: 2px solid #795548;
+  border-radius: 8px;
+  color: #E9D8A1;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.submit-button {
+  background-color: #795548;
+  color: #E9D8A1;
   border: none;
-  box-shadow: none;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.alternate-login {
+  margin-top: 20px;
+  text-align: center;
+  width: 300px;
+}
+
+.alternate-login p {
+  color: #E9D8A1;
+  margin-bottom: 10px;
+}
+
+.google-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #795548;
+  color: #E9D8A1;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.google-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.account-toggle {
+  margin-top: 20px;
+  color: #E9D8A1;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: #E9D8A1;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.toggle-button:disabled {
+  cursor: not-allowed;
 }

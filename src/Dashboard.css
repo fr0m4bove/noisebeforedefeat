@@ -1,0 +1,252 @@
+/* Dashboard.css */
+.dashboard-container {
+  background: linear-gradient(to bottom right, #1e2636, #121a28, #0f1620);
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+  color: #e8e0c8;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  color: #e8e0c8;
+}
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.player-stats-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.player-stats-card h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #769656;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  background-color: rgba(118, 150, 86, 0.1);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #e8e0c8;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.action-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.action-card h2 {
+  margin-bottom: 1.5rem;
+  color: #769656;
+}
+
+.game-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.game-mode-item {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.game-mode-item:hover {
+  transform: translateY(-5px);
+  background-color: rgba(118, 150, 86, 0.1);
+}
+
+.game-mode-item h3 {
+  color: #769656;
+  margin-bottom: 0.75rem;
+}
+
+.game-mode-item p {
+  color: #e8e0c8;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.players-badge {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: #769656;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.action-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.ai-card, .learn-card, .friends-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ai-card h3, .learn-card h3, .friends-card h3 {
+  color: #769656;
+  margin-bottom: 1rem;
+}
+
+.ai-card p, .learn-card p, .friends-card p {
+  color: #e8e0c8;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.action-button {
+  background-color: #769656;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  align-self: flex-start;
+}
+
+.action-button:hover {
+  background-color: #5c7a43;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(18, 26, 40, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #e8e0c8;
+}
+
+.loading-content p {
+  margin-top: 2rem;
+  font-size: 1.5rem;
+}
+
+/* Network Sphere Animation */
+.network-sphere {
+  width: 300px;
+  height: 300px;
+  position: relative;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rotating-sphere {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: relative;
+  margin: 0 auto;
+  border: 2px solid rgba(118, 150, 86, 0.3);
+  animation: rotate 8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rotating-sphere::before {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 224, 200, 0.2);
+  animation: rotate 6s linear infinite reverse;
+}
+
+.rotating-sphere::after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid rgba(118, 150, 86, 0.2);
+  animation: rotate 4s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-container {
+    padding: 1rem;
+  }
+}

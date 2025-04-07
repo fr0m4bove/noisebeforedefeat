@@ -1,6 +1,6 @@
-// src/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -13,13 +13,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Firebase auth state listener
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    console.log("Setting up auth state listener");
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed, user:", user);
       setCurrentUser(user);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return unsubscribe; // Cleanup on unmount
   }, []);
 
   const value = {
@@ -29,7 +30,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

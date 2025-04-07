@@ -23,10 +23,14 @@ function Login() {
         // Sign up logic
         await createUserWithEmailAndPassword(auth, email, password);
         alert('Account created successfully!');
+        // Force a full page redirect
+        window.location.href = '/dashboard';
       } else {
         // Sign in logic
         await signInWithEmailAndPassword(auth, email, password);
         alert('Logged in successfully!');
+        // Force a full page redirect
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       setError(error.message);
@@ -46,6 +50,8 @@ function Login() {
       const user = result.user;
       console.log(user);
       alert('Google Sign-In successful!');
+      // Force a full page redirect
+      window.location.href = '/dashboard';
     } catch (error) {
       // More detailed error logging
       console.error('Google Sign-In error:', error);
@@ -54,12 +60,12 @@ function Login() {
   };
 
   return (
-    <div className="home-container" style={{
+    <div className="login-container" style={{
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
       justifyContent: 'center',
-      height: '100vh'
+      minHeight: 'calc(100vh - var(--nav-height))'
     }}>
       <h2 style={{color: '#E9D8A1', marginBottom: '20px'}}>
         {isSignUp ? 'Sign Up' : 'Login'}

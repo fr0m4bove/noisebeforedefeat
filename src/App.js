@@ -5,12 +5,14 @@ import About from './About';
 import Leaderboard from './Leaderboard';
 import Login from './Login';
 import Feedback from './Feedback';
+import Dashboard from './Dashboard';
+import ProtectedRoute from './ProtectedRoute';
 import './App.css';
-import { AuthProvider } from './AuthContext'; // Add this import
+import { AuthProvider } from './AuthContext';
 
 function App() {
   return (
-    <AuthProvider> {/* Add this wrapper */}
+    <AuthProvider>
       <Router>
         <div className="app-container">
           {/* Top Navigation */}
@@ -39,7 +41,7 @@ function App() {
               </div>
             </div>
           </nav>
-
+          
           {/* Main Content Area */}
           <main className="content">
             <Routes>
@@ -48,6 +50,11 @@ function App() {
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/feedback" element={<Feedback />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
             </Routes>
           </main>
         </div>

@@ -1,0 +1,62 @@
+.game-container {
+  background: linear-gradient(to bottom right, #1e2636, #121a28, #0f1620);
+  min-height: calc(100vh - var(--nav-height));
+  padding: 2rem;
+  color: var(--chess-tan);
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.game-header h1 {
+  font-size: 2.5rem;
+  color: var(--chess-tan);
+  margin-bottom: 0.5rem;
+}
+
+.game-header p {
+  color: var(--chess-tan);
+  opacity: 0.8;
+}
+
+.game-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - var(--nav-height));
+  background: linear-gradient(to bottom right, #1e2636, #121a28, #0f1620);
+  color: var(--chess-tan);
+}
+
+.game-loading p {
+  margin-top: 2rem;
+  font-size: 1.5rem;
+}
+
+.game-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.placeholder-message {
+  text-align: center;
+  max-width: 600px;
+}
+
+.placeholder-message h2 {
+  color: var(--chess-green);
+  margin-bottom: 1rem;
+}
+
+.placeholder-message p {
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}

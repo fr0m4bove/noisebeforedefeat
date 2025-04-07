@@ -3,7 +3,7 @@ import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaszm82heY-IvGcJ_7wIhlFE_BFiuuY-NZcJk",
+  apiKey: "AIzaSyBR2ReY-IvGoJ_7uxDLfE_RF1uuYrNZoJk",
   authDomain: "noise-before-defeat.firebaseapp.com",
   projectId: "noise-before-defeat",
   storageBucket: "noise-before-defeat.firebasestorage.app",

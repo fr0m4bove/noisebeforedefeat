@@ -1,0 +1,52 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - var(--nav-height));
+  padding: 0 20px;
+  text-align: center;
+  width: 100%;
+  /* Remove any borders or background colors */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: var(--chess-tan);
+}
+
+.quote-container {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  /* Remove any borders */
+  border: none;
+  background: transparent;
+}
+
+.quote {
+  font-size: 1.75rem;
+  line-height: 1.4;
+  color: var(--chess-tan);
+  font-family: 'Exo 2', sans-serif;
+  text-align: center;
+  transition: opacity 1s ease;
+  opacity: 1;
+}
+
+.fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}

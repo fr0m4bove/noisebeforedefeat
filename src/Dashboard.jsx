@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import './Dashboard.css';
+import NoiseBeforeDefeat from './NoiseBeforeDefeat';
 
 function Dashboard() {
   const { currentUser } = useAuth();
+  const [activeGame, setActiveGame] = useState(null);
   
-  // You would typically fetch user-specific data here
-  // For now, using mock data
+  // Player stats
   const playerStats = {
     wins: 12,
     losses: 5,
@@ -17,7 +18,7 @@ function Dashboard() {
   // Game modes available
   const gameModes = [
     {
-      id: "2player-flash",
+      id: "player-flash",
       name: "2 Player Flash",
       description: "10 minute games, 40 seconds think limit",
       players: 2
@@ -35,73 +36,103 @@ function Dashboard() {
       players: 4
     }
   ];
+  
+  // Handle starting a game
+  const handlePlayNow = (gameMode) => {
+    setActiveGame(gameMode);
+  };
+  
+  // Handle exiting a game
+  const handleExitGame = () => {
+    setActiveGame(null);
+  };
 
   return (
     <div className="dashboard-container">
-      <h1 className="dashboard-welcome">Welcome, {currentUser.displayName || 'Player'}</h1>
-      
-      {/* Player Stats Section */}
-      <section className="stats-section">
-        <h2 className="section-title">Player Stats</h2>
-        <div className="stats-grid">
-          <div className="stat-item">
-            <div className="stat-value">{playerStats.wins}</div>
-            <div className="stat-label">Wins</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{playerStats.losses}</div>
-            <div className="stat-label">Losses</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{playerStats.winRate}%</div>
-            <div className="stat-label">Win Rate</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{playerStats.eloRating}</div>
-            <div className="stat-label">ELO Rating</div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Play Online Section */}
-      <section className="play-section">
-        <h2 className="section-title">Play Online</h2>
-        <div className="game-modes">
-          {gameModes.map(mode => (
-            <div key={mode.id} className="game-mode-card">
-              <h3 className="game-mode-title">{mode.name}</h3>
-              <p className="game-mode-description">{mode.description}</p>
-              <div className="game-mode-footer">
-                <span className="player-count">{mode.players} Players</span>
-                <button className="action-button">Play Now</button>
+      {!activeGame ? (
+        // Dashboard view when no game is active
+        <>
+          <h1 className="dashboard-welcome">Welcome, {currentUser.displayName || "Player"}!</h1>
+          
+          {/* Player Stats section */}
+          <section className="stats-section">
+            <h2 className="section-title">Player Stats</h2>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <div className="stat-value">{playerStats.wins}</div>
+                <div className="stat-label">Wins</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{playerStats.losses}</div>
+                <div className="stat-label">Losses</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{playerStats.winRate}%</div>
+                <div className="stat-label">Win Rate</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{playerStats.eloRating}</div>
+                <div className="stat-label">ELO Rating</div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-      
-      {/* Action Cards Section */}
-      <section className="actions-section">
-        <div className="action-cards">
-          <div className="action-card">
-            <h3 className="action-title">Play AI</h3>
-            <p className="action-description">Practice against the computer with adaptive difficulty</p>
-            <button className="action-button">Start Game</button>
-          </div>
+          </section>
           
-          <div className="action-card">
-            <h3 className="action-title">Learn</h3>
-            <p className="action-description">Master the game through puzzles and tutorials</p>
-            <button className="action-button">Start Learning</button>
-          </div>
+          {/* Play Online section */}
+          <section className="play-section">
+            <h2 className="section-title">Play Online</h2>
+            <div className="game-modes">
+              {gameModes.map((mode) => (
+                <div key={mode.id} className="game-mode-card">
+                  <h3 className="game-mode-title">{mode.name}</h3>
+                  <p className="game-mode-description">{mode.description}</p>
+                  <div className="game-mode-footer">
+                    <span className="player-count">{mode.players} Players</span>
+                    <button className="action-button" onClick={() => handlePlayNow(mode.id)}>Play Now</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
           
-          <div className="action-card">
-            <h3 className="action-title">Add Friends</h3>
-            <p className="action-description">Find friends and challenge them to a match</p>
-            <button className="action-button">Manage Friends</button>
+          {/* Action cards section */}
+          <section className="actions-section">
+            <div className="action-cards">
+              <div className="action-card">
+                <h3 className="action-title">Play AI</h3>
+                <p className="action-description">Practice against the computer with adaptive difficulty</p>
+                <button className="action-button" onClick={() => handlePlayNow('ai')}>Start Game</button>
+              </div>
+              
+              <div className="action-card">
+                <h3 className="action-title">Learn</h3>
+                <p className="action-description">Master the game through puzzles and tutorials</p>
+                <button className="action-button">Start Learning</button>
+              </div>
+              
+              <div className="action-card">
+                <h3 className="action-title">Add Friends</h3>
+                <p className="action-description">Find friends and challenge them to a match</p>
+                <button className="action-button">Manage Friends</button>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        // Game view when a game is active
+        <div className="game-view">
+          <div className="game-header">
+            <h2>Noise Before Defeat - {gameModes.find(mode => mode.id === activeGame)?.name || 'Game'}</h2>
+            <button className="exit-game-button" onClick={handleExitGame}>Exit Game</button>
+          </div>
+          <div className="game-container">
+            <NoiseBeforeDefeat 
+              gameMode={activeGame} 
+              onGameEnd={handleExitGame}
+              currentUser={currentUser}
+            />
           </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

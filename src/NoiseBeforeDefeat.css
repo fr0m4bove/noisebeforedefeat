@@ -13,10 +13,11 @@
 /* Game board container */
 .board-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   margin: 0 auto;
   padding: 20px;
+  padding-right: 100px;
 }
 
 /* Game board SVG */
@@ -24,5 +25,4 @@
   background-color: #2d2d3a;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  margin: 0 auto;
 }

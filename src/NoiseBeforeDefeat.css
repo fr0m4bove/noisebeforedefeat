@@ -81,6 +81,8 @@
   max-width: 100%;
   height: auto;
   margin: 0 auto;
+  margin-left: 100;
+  margin-top: 300;
 }
 
 /* Game controls panel */

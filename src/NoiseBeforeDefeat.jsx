@@ -69,20 +69,21 @@ const NoiseBeforeDefeat = () => {
   const svgHeight = (GRID_SIZE * 2 + 1) * CELL_SIZE;
 
   return (
-    <div className="noise-game-container">
-        <svg 
-          ref={svgRef}
-          width={svgWidth} 
-          height={svgHeight} 
-          className="game-board"
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-	  style={{marginRight: '100px' }} 
-        >
-          {generateGrid()}
-        </svg>
-      </div>
-    </div>
-  );
+	  <div>
+	    <div className="noise-game-container">
+        	<svg 
+	          ref={svgRef}
+	          width={svgWidth} 
+	          height={svgHeight} 
+	          className="game-board"
+	          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+		  style={{marginRight: '100px' }} 
+	        >
+	          {generateGrid()}
+	        </svg>
+	      </div>
+	    </div>
+	  );
 };
 
 export default NoiseBeforeDefeat;

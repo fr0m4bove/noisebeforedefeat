@@ -2943,9 +2943,8 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
             height={GRID_SIZE * 2 * CELL_SIZE}
 
             className="game-board"
-	  	style={{transform: 'translate(400px, 600px)' }}
 
-            viewBox={`0 0 ${GRID_SIZE * 2 * CELL_SIZE} ${GRID_SIZE * 2 * CELL_SIZE}`}
+            viewBox={` -${(GRID_SIZE * 2 * CELL_SIZE)/2} -${(GRID_SIZE * 2 * CELL_SIZE)/2} ${GRID_SIZE * 2 * CELL_SIZE} ${GRID_SIZE * 2 * CELL_SIZE}`}
 
             preserveAspectRatio="xMidYMin meet"
 

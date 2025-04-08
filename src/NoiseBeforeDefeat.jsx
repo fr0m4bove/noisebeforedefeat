@@ -2096,6 +2096,40 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     );
   };
 
+// With your other render functions
+const renderGameLogAndChat = () => {
+  return (
+    <div className="game-log-and-chat">
+      <div className="game-log">
+        {gameState.gameLog.map((logEntry, index) => (
+          <div key={index} className="log-entry">
+            {logEntry}
+          </div>
+        ))}
+      </div>
+      <div className="chat-section">
+        <div className="chat-messages" ref={chatEndRef}>
+          {chatMessages.map((message, index) => (
+            <div key={index} className="chat-message">
+              <span className="chat-sender">{message.sender}: </span>
+              <span className="chat-text">{message.text}</span>
+              <span className="chat-timestamp">{message.timestamp}</span>
+            </div>
+          ))}
+        </div>
+        <form onSubmit={handleChatSubmit} className="chat-input-form">
+          <input
+            type="text"
+            value={newChatMessage}
+            onChange={(e) => setNewChatMessage(e.target.value)}
+            placeholder="Type a message..."
+          />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  );
+};
   // Render split popup
   const renderSplitPopup = () => {
     if (!showSplitPopup) return null;
@@ -2184,6 +2218,9 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           {renderPlayerInfo('p1')}
           {renderPlayerInfo('p2')}
           {renderGameLogAndChat()}
+	  {renderGameLogAndChat()}
+	  {renderSplitPopup()}
+	  {renderResultModal()}
         </div>
       </div>
       

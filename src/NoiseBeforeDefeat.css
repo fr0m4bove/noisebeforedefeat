@@ -436,7 +436,7 @@
 }
 
 .chat-header {
-  background-color: #3d3d4a;
+  background-color: #795548;
   display: flex;
 }
 
@@ -445,7 +445,7 @@
   padding: 10px;
   background-color: transparent;
   border: none;
-  color: #E9D8A1;
+  color: #1a1a24;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -455,7 +455,7 @@
 }
 
 .chat-header .tab-button.active {
-  background-color: #1a1a24;
+  background-color: #795548;
   border-bottom: 2px solid #5050ff;
 }
 
@@ -871,12 +871,12 @@
   }
   
   .board-container {
-	flex: 1;
       	max-width: 800px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	padding: 20px;
+	margin: 0 auto;
 }	
   .action-buttons {
     grid-template-columns: repeat(3, 1fr);

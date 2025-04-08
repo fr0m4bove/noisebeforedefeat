@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import './Dashboard.css';
+import { FriendsList } from './FriendsList';
 import NoiseBeforeDefeat from './NoiseBeforeDefeat';
 
 function Dashboard() {
   const { currentUser } = useAuth();
   const [activeGame, setActiveGame] = useState(null);
-  
+  const [showFriendsList, setShowFriendsList] = useState(false);
+
   // Player stats
   const playerStats = {
     wins: 12,
@@ -112,7 +114,7 @@ function Dashboard() {
               <div className="action-card">
                 <h3 className="action-title">Add Friends</h3>
                 <p className="action-description">Find friends and challenge them to a match</p>
-                <button className="action-button">Manage Friends</button>
+                <button className="action-button" onClick={() => setShowFriendsList(true)}>Manage Friends</button>
               </div>
             </div>
           </section>
@@ -133,8 +135,22 @@ function Dashboard() {
           </div>
         </div>
       )}
+      
+      {showFriendsList && (
+        <div className="friends-modal-backdrop">
+          <div className="friends-modal">
+            <div className="friends-modal-header">
+              <h2>Manage Friends</h2>
+              <button className="close-button" onClick={() => setShowFriendsList(false)}>x</button>
+            </div>
+            <div className="friends-modal-content">
+              <FriendsList currentUser={currentUser} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
+      
 export default Dashboard;

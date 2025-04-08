@@ -78,7 +78,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  width: 100%;
+  max-width: 100%;
   height: auto;
   margin: 0 auto;
 }
@@ -456,7 +456,7 @@
 
 .chat-header .tab-button.active {
   background-color: #795548;
-  border-bottom: 2px solid #5050ff;
+  border-bottom: 2px solid #1a1a24;
 }
 
 .chat-messages {
@@ -871,12 +871,13 @@
   }
   
   .board-container {
-      	max-width: 800px;
+      	width: 100%;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	padding: 20px;
 	margin: 0 auto;
+	flex: none;
 }	
   .action-buttons {
     grid-template-columns: repeat(3, 1fr);

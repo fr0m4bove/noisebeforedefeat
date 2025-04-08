@@ -77,7 +77,7 @@ const NoiseBeforeDefeat = () => {
 	          height={svgHeight} 
 	          className="game-board"
 	          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-		  style={{marginRight: '100px' }} 
+		  style={{marginLeft: '400px' }} 
 	        >
 	          {generateGrid()}
 	        </svg>

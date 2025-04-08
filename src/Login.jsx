@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDatabase, ref, set ) from 'firebase/database';
+import { getDatabase, ref, set } from 'firebase/database';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -47,15 +47,15 @@ function Login() {
           });
         }
         
-	// Create user profile in database
-const db = getDatabase();
-const userRef = ref(db, `users/${userCredential.user.uid}/profile`);
-await set(userRef, {
-  username: username.trim() || email.split('@')[0], // Use username if provided, or email prefix
-  email: email,
-  displayName: username.trim() || email.split('@')[0],
-  createdAt: new Date().toISOString()
-});
+        // Create user profile in database
+        const db = getDatabase();
+        const userRef = ref(db, `users/${userCredential.user.uid}/profile`);
+        await set(userRef, {
+          username: username.trim() || email.split('@')[0], // Use username if provided, or email prefix
+          email: email,
+          displayName: username.trim() || email.split('@')[0],
+          createdAt: new Date().toISOString()
+        });
         alert('Account created successfully!');
       } else {
         // Sign in logic

@@ -266,8 +266,7 @@
 
 .game-container {
   width: 100%;
-  display: flex;
-  justify-content: center;
+  display: block;
   box-shadow: none;
   border-radius: 0;
   overflow: visible;

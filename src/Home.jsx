@@ -39,16 +39,17 @@ const Home = () => {
     return () => clearTimeout(timeoutId);
   }, [quotes.length]);
 
-  return (
-    <div className="home-container">
-      <h1 className="title">Noise Before Defeat</h1>
-      <div className="quote-container">
-        <p className={`quote ${fade ? 'fade-in' : 'fade-out'}`}>
-          {quotes[quoteIndex]}
-        </p>
-      </div>
-    </div>
-  );
+	return (
+    		<div className="home-container">
+      			<h1 className="title">Noise Before Defeat</h1>
+      			<div className="quote-container">
+        			<p className={`quote ${fade ? 'fade-in' : 'fade-out'}`}>
+          				{quotes[quoteIndex]}
+				</p>
+			</div>
+			<p className="production-credit">A Noah Riordan Production</p>
+		</div>
+	);
 };
 
 export default Home;

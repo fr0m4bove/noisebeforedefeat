@@ -877,9 +877,8 @@
 	align-items: center;
 	padding: 20px;
 	margin: 0 auto;
-	flex: none;
-	margin-top: 30px;
-	margin-left: 50px;
+	order: 1;
+	flex: 1;
 }	
   .action-buttons {
     grid-template-columns: repeat(3, 1fr);

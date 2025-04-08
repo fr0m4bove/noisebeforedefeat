@@ -2945,7 +2945,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
             className="game-board"
 
             viewBox={`
-  ${-((GRID_SIZE * 2 * CELL_SIZE) / 2) + 280} 
+  ${-((GRID_SIZE * 2 * CELL_SIZE) / 2) + 220} 
   ${-((GRID_SIZE * 2 * CELL_SIZE) / 4)} 
   ${GRID_SIZE * 2 * CELL_SIZE + 150} 
   ${GRID_SIZE * 2 * CELL_SIZE + 100}

@@ -1760,6 +1760,8 @@
 
 	flex: 1;
 
+	transform: translateX(200px);
+
 }	
 
   .action-buttons {

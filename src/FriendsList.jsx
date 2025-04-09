@@ -206,12 +206,149 @@ export const FriendsList = ({ currentUser }) => {
     }
   };
   
-  // Rest of the component remains the same as in the previous version
-  // ... (render method stays unchanged)
-  
   return (
-    <div className="friends-list">
-      {/* Existing render logic remains the same */}
+    <div className="friends-modal-backdrop">
+      <div className="friends-modal">
+        <div className="friends-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
+            onClick={() => setActiveTab('friends')}
+          >
+            Friends
+            {friends.length > 0 && <span className="count">{friends.length}</span>}
+          </button>
+          
+          <button 
+            className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
+            onClick={() => setActiveTab('requests')}
+          >
+            Requests
+            {friendRequests.length > 0 && <span className="count">{friendRequests.length}</span>}
+          </button>
+          
+          <button 
+            className={`tab-button ${activeTab === 'find' ? 'active' : ''}`}
+            onClick={() => setActiveTab('find')}
+          >
+            Find Friends
+          </button>
+        </div>
+        
+        <div className="friends-content">
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
+          
+          {activeTab === 'friends' && (
+            <div className="friends-tab">
+              {friends.length === 0 ? (
+                <p className="empty-list">You don't have any friends yet. Add some!</p>
+              ) : (
+                <ul className="friends-items">
+                  {friends.map((friend) => (
+                    <li key={friend.uid} className="friend-item">
+                      <div className="friend-info">
+                        <div className="friend-name">{friend.username}</div>
+                        <div className="friend-status">{friend.status === 'online' ? 'Online' : 'Offline'}</div>
+                      </div>
+                      <div className="friend-actions">
+                        <button 
+                          className="invite-button"
+                          onClick={() => console.log('Invite to game feature coming soon')}
+                        >
+                          Invite
+                        </button>
+                        <button 
+                          className="remove-button"
+                          onClick={() => removeFriend(friend.uid, friend.username)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          
+          {activeTab === 'requests' && (
+            <div className="requests-tab">
+              {friendRequests.length === 0 ? (
+                <p className="empty-list">No pending friend requests</p>
+              ) : (
+                <ul className="request-items">
+                  {friendRequests.map((request) => (
+                    <li key={request.uid} className="request-item">
+                      <div className="request-info">
+                        <div className="request-name">{request.username}</div>
+                        <div className="request-time">
+                          {new Date(request.timestamp).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="request-actions">
+                        <button 
+                          className="accept-button"
+                          onClick={() => acceptFriendRequest(request.uid, request.username)}
+                        >
+                          Accept
+                        </button>
+                        <button 
+                          className="reject-button"
+                          onClick={() => rejectFriendRequest(request.uid)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          
+          {activeTab === 'find' && (
+            <div className="find-tab">
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="friend-email-input"
+                  placeholder="Search by username"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <button 
+                  className="send-request-button"
+                  onClick={handleSearch}
+                  disabled={isSearching || !searchTerm.trim()}
+                >
+                  {isSearching ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+              
+              {isSearching && <p>Searching...</p>}
+              
+              {!isSearching && searchResults.length > 0 && (
+                <ul className="search-results">
+                  {searchResults.map((user) => (
+                    <li key={user.uid} className="search-result-item">
+                      <div className="user-info">
+                        <div className="user-name">{user.username}</div>
+                      </div>
+                      <button 
+                        className="send-request-button"
+                        onClick={() => sendFriendRequest(user.uid, user.username)}
+                      >
+                        Add Friend
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,10 +1,24 @@
 /* FriendsList.css */
-.friends-list {
+.friends-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.friends-modal {
   background-color: #2C3E50;
   border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: auto;
   padding: 20px;
   color: #ECF0F1;
 }

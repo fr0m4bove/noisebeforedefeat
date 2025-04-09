@@ -73,14 +73,15 @@ export const getValidMoves = (position, gameState, isCellOccupied, isValidPositi
     .filter(pos => isValidPosition(pos.x, pos.y) && !isCellOccupied(pos.x, pos.y));
 };
 
-// Grid to SVG coordinate conversion
+// Grid to SVG coordinate conversion - WITH VIEWBOX ADJUSTMENT
+// This matches your current viewBox values
 export const gridToSvg = (x, y) => {
   const GRID_SIZE = 8;
   const CELL_SIZE = 50;
   
-  // Calculate the base SVG coordinates 
-  const svgX = (GRID_SIZE * CELL_SIZE) + (x * CELL_SIZE);
-  const svgY = (GRID_SIZE * CELL_SIZE) + (y * CELL_SIZE);
+  // Use your original calculation but with consistent offset values
+  const svgX = (GRID_SIZE / 2 * CELL_SIZE) + (x * CELL_SIZE);
+  const svgY = (GRID_SIZE / 2 * CELL_SIZE) + (y * CELL_SIZE);
   
   return { x: svgX, y: svgY };
 };

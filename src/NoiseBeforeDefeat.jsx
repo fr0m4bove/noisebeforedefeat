@@ -302,7 +302,19 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           ...prev.players[playerId].longRange,
           position: newPosition
         };
+      } else {
+	
+	// Move node (core, comms, rd)
+      if (prev.players[playerId].nodes[piece.type]) {
+        newState.players[playerId].nodes = {
+          ...prev.players[playerId].nodes,
+          [piece.type]: {
+            ...prev.players[playerId].nodes[piece.type],
+            position: newPosition
+          }
+        };
       }
+    }
       
       if (isCenterSquare(newPosition)) {
         newState.centerControllers = {
@@ -511,6 +523,20 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       }));
       return;
     }
+    // Check if the clicked position is a node (adding this support)
+  for (const nodeType in gameState.players[playerId].nodes) {
+    const node = gameState.players[playerId].nodes[nodeType];
+    if (node.position.x === position.x && node.position.y === position.y) {
+      const validMoves = getValidMoves(node.position, gameState, isCellOccupied, isValidPosition);
+      setGameState(prev => ({
+        ...prev,
+        selectedPiece: { id: `${playerId}-${nodeType}`, type: nodeType },
+        validMoves,
+        selectedAction: 'move'
+      }));
+      return;
+    }
+  }
     setGameState(prev => ({
       ...prev,
       selectedPiece: null,
@@ -652,46 +678,55 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     }
   };
 
-  // Handle hack action
-  const handleHackAction = (position) => {
-    const playerId = gameState.activePlayer;
-    const opponentIdLocal = playerId === 'p1' ? 'p2' : 'p1';
-    let isNode = false;
-    for (const nodeType in gameState.players[opponentIdLocal].nodes) {
-      const node = gameState.players[opponentIdLocal].nodes[nodeType];
-      if (node.position.x === position.x && node.position.y === position.y) {
-        isNode = true;
-        break;
-      }
+// Handle hack action
+const handleHackAction = (position) => {
+  const playerId = gameState.activePlayer;
+  const opponentIdLocal = playerId === 'p1' ? 'p2' : 'p1';
+  let isNode = false;
+  
+  // Check if target is a node
+  for (const nodeType in gameState.players[opponentIdLocal].nodes) {
+    const node = gameState.players[opponentIdLocal].nodes[nodeType];
+    if (node.position.x === position.x && node.position.y === position.y) {
+      isNode = true;
+      break;
     }
-    if (isNode) {
-      handleHack(position, gameState, setGameState, setAnimations, HACK_COST);
-      // Lightning bolt integration
-      const rdNode = gameState.players[playerId].nodes.rd;
-      const rdPos = gridToSvg(rdNode.position.x, rdNode.position.y);
-      const targetPos = gridToSvg(position.x, position.y);
-      
-      let primaryColor, secondaryColor;
-      // If targeting comms, use red/green; else red only
-      if (gameState.players[opponentIdLocal].nodes.comms &&
-          gameState.players[opponentIdLocal].nodes.comms.position.x === position.x &&
-          gameState.players[opponentIdLocal].nodes.comms.position.y === position.y) {
-        primaryColor = "#FF0000";
-        secondaryColor = "#00FF00";
-      } else {
-        primaryColor = "#FF0000";
-        secondaryColor = "#FF0000";
-      }
-      setLightningBoltProps({ 
-        start: rdPos, 
-        end: targetPos, 
-        color1: primaryColor, 
-        color2: secondaryColor 
-      });
+  }
+  
+  if (isNode) {
+    // Execute the hack
+    handleHack(position, gameState, setGameState, setAnimations, HACK_COST);
+    
+    // Set up the lightning bolt with corrected positioning
+    const rdNode = gameState.players[playerId].nodes.rd;
+    
+    // Use gridToSvg to get consistent coordinates for both start and end points
+    const rdPos = gridToSvg(rdNode.position.x, rdNode.position.y);
+    const targetPos = gridToSvg(position.x, position.y);
+    
+    // Choose colors based on the target node type
+    let primaryColor, secondaryColor;
+    if (gameState.players[opponentIdLocal].nodes.comms &&
+        gameState.players[opponentIdLocal].nodes.comms.position.x === position.x &&
+        gameState.players[opponentIdLocal].nodes.comms.position.y === position.y) {
+      primaryColor = "#FF0000";
+      secondaryColor = "#00FF00";
     } else {
-      setGameState(prev => ({ ...prev, selectedAction: null }));
+      primaryColor = "#FF0000";
+      secondaryColor = "#FF0000";
     }
-  };
+    
+    // Set the lightning bolt properties with correct positioning
+    setLightningBoltProps({ 
+      start: rdPos, 
+      end: targetPos, 
+      color1: primaryColor, 
+      color2: secondaryColor 
+    });
+  } else {
+    setGameState(prev => ({ ...prev, selectedAction: null }));
+  }
+};
 
   // Handle surrounding attack selection
   const handleSurroundAttackSelection = (position) => {
@@ -1094,7 +1129,12 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
             width={GRID_SIZE * 2 * CELL_SIZE}
             height={GRID_SIZE * 2 * CELL_SIZE}
             className="game-board"
-            viewBox={`0 0 ${GRID_SIZE * 2 * CELL_SIZE} ${GRID_SIZE * 2 * CELL_SIZE}`}
+            viewBox={`
+		    ${-((GRID_SIZE * 2 * CELL_SIZE) / 2) +155}
+		    ${-((GRID_SIZE * 2 * CELL_SIZE) / 4) - 100}
+		    ${GRID_SIZE * 2 * CELL_SIZE + 150}
+		    ${GRID_SIZE * 2 * CELL_SIZE + 100}
+		  `}
             preserveAspectRatio="xMidYMid meet"
           >
             {renderBoard(

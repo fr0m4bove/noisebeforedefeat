@@ -39,23 +39,30 @@ function Login() {
       if (isSignUp) {
         // Sign up logic
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
-        // If username provided, update the profile
-        if (username.trim()) {
-          await updateProfile(userCredential.user, {
-            displayName: username
-          });
-        }
+        // Generate a default username if not provided
+        const defaultUsername = username.trim() || email.split('@')[0];
         
-        // Create user profile in database
-        const db = getDatabase();
-        const userRef = ref(db, `users/${userCredential.user.uid}/profile`);
-        await set(userRef, {
-          username: username.trim() || email.split('@')[0], // Use username if provided, or email prefix
-          email: email,
-          displayName: username.trim() || email.split('@')[0],
-          createdAt: new Date().toISOString()
+        // Update Firebase Auth profile
+        await updateProfile(user, {
+          displayName: defaultUsername
         });
+        
+        // Create user data in Realtime Database with flat structure
+        const db = getDatabase();
+        const userRef = ref(db, `users/${user.uid}`);
+        await set(userRef, {
+          username: defaultUsername,
+          email: email,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          totalGames: 0,
+          wins: 0,
+          losses: 0,
+          eloRating: 1500 // Starting ELO rating
+        });
+        
         alert('Account created successfully!');
       } else {
         // Sign in logic
@@ -80,7 +87,25 @@ function Login() {
       provider.addScope('https://www.googleapis.com/auth/userinfo.email');
       provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
       
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      
+      // Get database reference
+      const db = getDatabase();
+      const userRef = ref(db, `users/${user.uid}`);
+      
+      // Check if user already exists in database
+      await set(userRef, {
+        username: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        totalGames: 0,
+        wins: 0,
+        losses: 0,
+        eloRating: 1500 // Starting ELO rating
+      }, { merge: true });
+      
       console.log("Google authentication successful");
       alert('Google Sign-In successful!');
       navigate('/dashboard');

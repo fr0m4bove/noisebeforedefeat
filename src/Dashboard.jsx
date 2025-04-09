@@ -1,7 +1,8 @@
+// Dashboard.jsx
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import './Dashboard.css';
-import { FriendsList } from './FriendsList';
+import FriendsList from './FriendsList';
 import NoiseBeforeDefeat from './NoiseBeforeDefeat';
 
 function Dashboard() {
@@ -9,41 +10,41 @@ function Dashboard() {
   const [activeGame, setActiveGame] = useState(null);
   const [showFriendsList, setShowFriendsList] = useState(false);
 
-  // Player stats
+  // Player stats (for demo purposes; you may replace these values with dynamic data)
   const playerStats = {
     wins: 12,
     losses: 5,
     winRate: 70.6,
-    eloRating: 1342
+    eloRating: 1342,
   };
-  
+
   // Game modes available
   const gameModes = [
     {
-      id: "player-flash",
-      name: "2 Player Flash",
-      description: "10 minute games, 40 seconds think limit",
-      players: 2
+      id: 'player-flash',
+      name: '2 Player Flash',
+      description: '10 minute games, 40 seconds think limit',
+      players: 2,
     },
     {
-      id: "standard",
-      name: "Standard",
-      description: "Classic gameplay with no time limits",
-      players: 2
+      id: 'standard',
+      name: 'Standard',
+      description: 'Classic gameplay with no time limits',
+      players: 2,
     },
     {
-      id: "multiplayer",
-      name: "Battle Royale",
-      description: "Strategic complexity with multiple opponents",
-      players: 4
-    }
+      id: 'multiplayer',
+      name: 'Battle Royale',
+      description: 'Strategic complexity with multiple opponents',
+      players: 4,
+    },
   ];
-  
+
   // Handle starting a game
   const handlePlayNow = (gameMode) => {
     setActiveGame(gameMode);
   };
-  
+
   // Handle exiting a game
   const handleExitGame = () => {
     setActiveGame(null);
@@ -54,9 +55,11 @@ function Dashboard() {
       {!activeGame ? (
         // Dashboard view when no game is active
         <>
-          <h1 className="dashboard-welcome">Welcome, {currentUser.displayName || "Player"}!</h1>
-          
-          {/* Player Stats section */}
+          <h1 className="dashboard-welcome">
+            Welcome, {currentUser.displayName || 'Player'}!
+          </h1>
+
+          {/* Player Stats Section */}
           <section className="stats-section">
             <h2 className="section-title">Player Stats</h2>
             <div className="stats-grid">
@@ -78,8 +81,8 @@ function Dashboard() {
               </div>
             </div>
           </section>
-          
-          {/* Play Online section */}
+
+          {/* Play Online Section */}
           <section className="play-section">
             <h2 className="section-title">Play Online</h2>
             <div className="game-modes">
@@ -89,32 +92,50 @@ function Dashboard() {
                   <p className="game-mode-description">{mode.description}</p>
                   <div className="game-mode-footer">
                     <span className="player-count">{mode.players} Players</span>
-                    <button className="action-button" onClick={() => handlePlayNow(mode.id)}>Play Now</button>
+                    <button
+                      className="action-button"
+                      onClick={() => handlePlayNow(mode.id)}
+                    >
+                      Play Now
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </section>
-          
-          {/* Action cards section */}
+
+          {/* Action Cards Section */}
           <section className="actions-section">
             <div className="action-cards">
               <div className="action-card">
                 <h3 className="action-title">Play AI</h3>
-                <p className="action-description">Practice against the computer with adaptive difficulty</p>
-                <button className="action-button" onClick={() => handlePlayNow('ai')}>Start Game</button>
+                <p className="action-description">
+                  Practice against the computer with adaptive difficulty
+                </p>
+                <button className="action-button" onClick={() => handlePlayNow('ai')}>
+                  Start Game
+                </button>
               </div>
-              
+
               <div className="action-card">
                 <h3 className="action-title">Learn</h3>
-                <p className="action-description">Master the game through puzzles and tutorials</p>
+                <p className="action-description">
+                  Master the game through puzzles and tutorials
+                </p>
                 <button className="action-button">Start Learning</button>
               </div>
-              
+
               <div className="action-card">
-                <h3 className="action-title">Add Friends</h3>
-                <p className="action-description">Find friends and challenge them to a match</p>
-                <button className="action-button" onClick={() => setShowFriendsList(true)}>Manage Friends</button>
+                <h3 className="action-title">Manage Friends</h3>
+                <p className="action-description">
+                  Find friends and challenge them to a match
+                </p>
+                <button
+                  className="action-button"
+                  onClick={() => setShowFriendsList(true)}
+                >
+                  Manage Friends
+                </button>
               </div>
             </div>
           </section>
@@ -123,34 +144,35 @@ function Dashboard() {
         // Game view when a game is active
         <div className="game-view">
           <div className="game-header">
-            <h2>Noise Before Defeat - {gameModes.find(mode => mode.id === activeGame)?.name || 'Game'}</h2>
-            <button className="exit-game-button" onClick={handleExitGame}>Exit Game</button>
+            <h2>
+              Noise Before Defeat -{' '}
+              {gameModes.find((mode) => mode.id === activeGame)?.name || 'Game'}
+            </h2>
+            <button className="exit-game-button" onClick={handleExitGame}>
+              Exit Game
+            </button>
           </div>
           <div className="game-container">
-            <NoiseBeforeDefeat 
-              gameMode={activeGame} 
+            <NoiseBeforeDefeat
+              gameMode={activeGame}
               onGameEnd={handleExitGame}
               currentUser={currentUser}
             />
           </div>
         </div>
       )}
-      
+
       {showFriendsList && (
         <div className="friends-modal-backdrop">
-          <div className="friends-modal">
-            <div className="friends-modal-header">
-              <h2>Manage Friends</h2>
-              <button className="close-button" onClick={() => setShowFriendsList(false)}>x</button>
-            </div>
-            <div className="friends-modal-content">
-              <FriendsList currentUser={currentUser} />
-            </div>
-          </div>
+          <FriendsList
+            currentUser={currentUser}
+            onClose={() => setShowFriendsList(false)}
+          />
         </div>
       )}
     </div>
   );
 }
-      
+
 export default Dashboard;
+

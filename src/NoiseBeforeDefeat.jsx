@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import './NoiseBeforeDefeat.css';
 import ChatBox from './ChatBox';
 import FriendsList from './FriendsList';
-//import LightningBolt from './LightningBolt';
+// import LightningBolt from './LightningBolt'; // Commented out for testing
 import { renderBoard, renderInfantry, renderLongRange, renderNode } from './GameRenderers';
 import {
   calculateDamage,
@@ -43,7 +43,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
   const auth = getAuth();
   const db = getDatabase();
 
-  // Initial game state (simplified; merge with full state as needed)
+  // Initial game state (simplified version; merge with your full state if needed)
   const initialGameState = {
     turn: 1,
     phase: "planning",
@@ -92,11 +92,11 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
   // State declarations
   const [gameState, setGameState] = useState(initialGameState);
   const [animations, setAnimations] = useState({});
-  const [lightningBoltProps, setLightningBoltProps] = useState(null);
+  // const [lightningBoltProps, setLightningBoltProps] = useState(null); // Commented out for testing
   const [showFriendsList, setShowFriendsList] = useState(false);
   const svgRef = useRef(null);
 
-  // Helper: Check if a cell is occupied
+  // Helper: Check if cell is occupied
   const isCellOccupied = (x, y) => {
     for (const playerId of ['p1', 'p2']) {
       if (gameState.players[playerId].infantry.some(inf => inf.position.x === x && inf.position.y === y)) return true;
@@ -153,7 +153,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     }));
   };
 
-  // Core cell click handler—with hack action and lightning integration
+  // Core cell click handler (with hack action; LightningBolt integration commented out)
   const handleCellClick = (x, y) => {
     const position = { x, y };
     const playerId = gameState.activePlayer;
@@ -162,7 +162,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     switch (gameState.selectedAction) {
       case 'move':
         if (gameState.selectedPiece && gameState.validMoves.some(move => move.x === x && move.y === y)) {
-          // (Insert actual move logic here; for now we just increment move counter)
+          // (Insert your move logic here)
           setGameState(prev => ({
             ...prev,
             currentTurnMoves: prev.currentTurnMoves + 1,
@@ -178,7 +178,6 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
         handleAttack(gameState.selectedPiece, position, gameState, setGameState, setAnimations, calculateDamage, isInAttackRange, isCenterSquare);
         break;
       case 'hack': {
-        // Identify if the clicked cell is an opponent's node
         const opponentId = playerId === 'p1' ? 'p2' : 'p1';
         let targetNode = null;
         for (const nodeType in gameState.players[opponentId].nodes) {
@@ -189,15 +188,15 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           }
         }
         if (!targetNode) return;
-        // Call existing hack handler
+        // Call hack handler
         handleHack(position, gameState, setGameState, setAnimations, HACK_COST);
-        // Compute SVG coordinates for lightning: start from player's R&D node, end at target node
+        // Compute SVG coordinates for lightning (commented out for testing)
+        /*
         const rdPos = gridToSvg(
           gameState.players[playerId].nodes.rd.position.x,
           gameState.players[playerId].nodes.rd.position.y
         );
         const targetPos = gridToSvg(targetNode.position.x, targetNode.position.y);
-        // Determine lightning colors: for 'comms', use red + green; else red only
         let primaryColor, secondaryColor;
         if (targetNode.type === 'comms') {
           primaryColor = "#FF0000";
@@ -207,6 +206,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           secondaryColor = "#FF0000";
         }
         setLightningBoltProps({ start: rdPos, end: targetPos, color1: primaryColor, color2: secondaryColor });
+        */
         break;
       }
       case 'split':
@@ -239,13 +239,13 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       <button className={`action-button ${gameState.selectedAction === 'surroundAttack' ? 'active' : ''}`} onClick={() => handleActionSelection('surroundAttack')} disabled={gameState.currentTurnMoves >= MOVES_PER_TURN}>
         Surround Attack
       </button>
-      <button className="ready-button" onClick={() => { /* Ready action logic */ }} disabled={gameState.players[gameState.activePlayer].ready}>
+      <button className="ready-button" onClick={() => { /* Ready action logic here */ }} disabled={gameState.players[gameState.activePlayer].ready}>
         Ready
       </button>
     </div>
   );
 
-  // Render player info (simplified)
+  // Render player info
   const renderPlayerInfo = (playerId) => {
     const player = gameState.players[playerId];
     const isActive = gameState.activePlayer === playerId;
@@ -327,7 +327,8 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           </svg>
         </div>
       </div>
-      {/* Render any split popup or result modal here if needed */}
+      {/* If the LightningBolt integration was causing issues, the following is commented out */}
+      {/*
       {lightningBoltProps && (
         <LightningBolt
           start={lightningBoltProps.start}
@@ -337,6 +338,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           onComplete={() => setLightningBoltProps(null)}
         />
       )}
+      */}
     </div>
   );
 };

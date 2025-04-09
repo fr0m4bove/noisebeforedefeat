@@ -1,108 +1,115 @@
-// LightningBolt.jsx
-import React, { useEffect, useRef } from 'react';
+// Updated LightningBolt component that will position correctly in the SVG
+import React, { useEffect, useState } from 'react';
 
-const LightningBolt = ({ start, end, color1, color2, onComplete }) => {
-  const canvasRef = useRef(null);
-
+const LightningBolt = ({ start, end, color1 = "#FF0000", color2 = "#FFFF00", onComplete }) => {
+  const [path, setPath] = useState('');
+  const [opacity, setOpacity] = useState(1);
+  
+  // Generate a lightning bolt path between two points
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-
-    // Ensure canvas covers the viewport
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const clearCanvas = () => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    // Make sure we have valid start and end points
+    if (!start || !end) return;
+    
+    // Generate jagged path for lightning
+    const generateLightningPath = () => {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      // Number of segments (more segments for longer distances)
+      const segments = Math.max(5, Math.floor(dist / 30));
+      
+      // Maximum jitter as a percentage of the distance
+      const jitter = 0.2;
+      
+      let pathData = `M ${start.x} ${start.y}`;
+      
+      for (let i = 1; i < segments; i++) {
+        const fraction = i / segments;
+        const pointX = start.x + dx * fraction;
+        const pointY = start.y + dy * fraction;
+        
+        // Add some randomness to the path
+        const jitterAmount = jitter * (segments - i) / segments;
+        const offsetX = (Math.random() * 2 - 1) * dist * jitterAmount;
+        const offsetY = (Math.random() * 2 - 1) * dist * jitterAmount;
+        
+        pathData += ` L ${pointX + offsetX} ${pointY + offsetY}`;
+      }
+      
+      // End at the target
+      pathData += ` L ${end.x} ${end.y}`;
+      
+      return pathData;
     };
-
-    // Simple lightning bolt function adapted from the Java snippet
-    const strike = (x1, y1, x2, y2, primary, secondary, drawOrbs) => {
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const segments = 10;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const segmentLength = distance / segments;
-      let prevX = x1;
-      let prevY = y1;
-
-      if (drawOrbs) {
-        context.strokeStyle = primary;
-        context.fillStyle = primary;
-        context.lineWidth = 2;
-        context.beginPath();
-        context.arc(x1, y1, 8 + Math.random() * 4, 0, 2 * Math.PI);
-        context.fill();
-      }
-
-      for (let i = 0; i <= segments; i++) {
-        let t = i / segments;
-        let x = x1 + dx * t;
-        let y = y1 + dy * t;
-        if (i !== 0 && i !== segments) {
-          x += (Math.random() * segmentLength) - segmentLength / 2;
-          y += (Math.random() * segmentLength) - segmentLength / 2;
-        }
-        // Draw thicker line in primary color
-        context.strokeStyle = primary;
-        context.lineWidth = 8;
-        context.beginPath();
-        context.moveTo(prevX, prevY);
-        context.lineTo(x, y);
-        context.stroke();
-
-        // Draw thinner line in secondary color on top
-        context.strokeStyle = secondary;
-        context.lineWidth = 4;
-        context.beginPath();
-        context.moveTo(prevX, prevY);
-        context.lineTo(x, y);
-        context.stroke();
-
-        prevX = x;
-        prevY = y;
-      }
-
-      if (drawOrbs) {
-        context.strokeStyle = secondary;
-        context.fillStyle = secondary;
-        context.lineWidth = 2;
-        context.beginPath();
-        context.arc(x2, y2, 8 + Math.random() * 4, 0, 2 * Math.PI);
-        context.fill();
-      }
-    };
-
-    let frame = 0;
-    const animationInterval = setInterval(() => {
-      clearCanvas();
-      if (frame < 5) { // Show the bolt for a few frames
-        strike(start.x, start.y, end.x, end.y, color1, color2, true);
+    
+    // Generate the lightning path
+    setPath(generateLightningPath());
+    
+    // Set up animation effect
+    const duration = 1000; // ms
+    const fadeTime = 300; // ms
+    let startTime = null;
+    
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      
+      if (elapsed < duration) {
+        // During the main animation, flicker the lightning
+        const flickerOpacity = Math.random() * 0.5 + 0.5;
+        setOpacity(flickerOpacity);
+        
+        requestAnimationFrame(animate);
+      } else if (elapsed < duration + fadeTime) {
+        // During the fade-out period
+        const fadeProgress = (elapsed - duration) / fadeTime;
+        setOpacity(1 - fadeProgress);
+        
+        requestAnimationFrame(animate);
       } else {
-        clearCanvas();
-        clearInterval(animationInterval);
-        if (onComplete) onComplete();
+        // Animation complete
+        setOpacity(0);
+        if (onComplete) setTimeout(onComplete, 100);
       }
-      frame++;
-    }, 50);
-
-    return () => clearInterval(animationInterval);
-  }, [start, end, color1, color2, onComplete]);
-
+    };
+    
+    requestAnimationFrame(animate);
+  }, [start, end, onComplete]);
+  
+  // If no path, don't render
+  if (!path) return null;
+  
   return (
-    <canvas
-      ref={canvasRef}
+    <svg 
       style={{
         position: 'absolute',
         top: 0,
         left: 0,
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none',
-        zIndex: 9999
+        zIndex: 1000
       }}
-    />
+    >
+      {/* First stroke - wider for glow effect */}
+      <path
+        d={path}
+        stroke={color2}
+        strokeWidth="6"
+        fill="none"
+        opacity={opacity * 0.5}
+      />
+      {/* Main stroke */}
+      <path
+        d={path}
+        stroke={color1}
+        strokeWidth="2"
+        fill="none"
+        opacity={opacity}
+      />
+    </svg>
   );
 };
 
 export default LightningBolt;
-

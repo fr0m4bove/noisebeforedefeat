@@ -302,19 +302,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           ...prev.players[playerId].longRange,
           position: newPosition
         };
-      } else {
-	
-	// Move node (core, comms, rd)
-      if (prev.players[playerId].nodes[piece.type]) {
-        newState.players[playerId].nodes = {
-          ...prev.players[playerId].nodes,
-          [piece.type]: {
-            ...prev.players[playerId].nodes[piece.type],
-            position: newPosition
-          }
-        };
       }
-    }
       
       if (isCenterSquare(newPosition)) {
         newState.centerControllers = {
@@ -523,20 +511,6 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       }));
       return;
     }
-    // Check if the clicked position is a node (adding this support)
-  for (const nodeType in gameState.players[playerId].nodes) {
-    const node = gameState.players[playerId].nodes[nodeType];
-    if (node.position.x === position.x && node.position.y === position.y) {
-      const validMoves = getValidMoves(node.position, gameState, isCellOccupied, isValidPosition);
-      setGameState(prev => ({
-        ...prev,
-        selectedPiece: { id: `${playerId}-${nodeType}`, type: nodeType },
-        validMoves,
-        selectedAction: 'move'
-      }));
-      return;
-    }
-  }
     setGameState(prev => ({
       ...prev,
       selectedPiece: null,
@@ -678,13 +652,12 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     }
   };
 
-// Handle hack action
+  // Modified handleHackAction function that correctly positions the lightning effect
 const handleHackAction = (position) => {
   const playerId = gameState.activePlayer;
   const opponentIdLocal = playerId === 'p1' ? 'p2' : 'p1';
   let isNode = false;
   
-  // Check if target is a node
   for (const nodeType in gameState.players[opponentIdLocal].nodes) {
     const node = gameState.players[opponentIdLocal].nodes[nodeType];
     if (node.position.x === position.x && node.position.y === position.y) {
@@ -694,17 +667,24 @@ const handleHackAction = (position) => {
   }
   
   if (isNode) {
-    // Execute the hack
     handleHack(position, gameState, setGameState, setAnimations, HACK_COST);
     
-    // Set up the lightning bolt with corrected positioning
+    // Lightning bolt integration with corrected positioning
     const rdNode = gameState.players[playerId].nodes.rd;
     
-    // Use gridToSvg to get consistent coordinates for both start and end points
-    const rdPos = gridToSvg(rdNode.position.x, rdNode.position.y);
-    const targetPos = gridToSvg(position.x, position.y);
+    // Get the bounds of the SVG element to help with positioning
+    const svgElement = svgRef.current;
+    const svgRect = svgElement ? svgElement.getBoundingClientRect() : null;
     
-    // Choose colors based on the target node type
+    // Convert grid positions to SVG coordinates
+    const { x: rdX, y: rdY } = gridToSvg(rdNode.position.x, rdNode.position.y);
+    const { x: targetX, y: targetY } = gridToSvg(position.x, position.y);
+    
+    // Create start and end points based on actual SVG element position
+    const start = { x: rdX, y: rdY };
+    const end = { x: targetX, y: targetY };
+    
+    // Choose colors based on target node type
     let primaryColor, secondaryColor;
     if (gameState.players[opponentIdLocal].nodes.comms &&
         gameState.players[opponentIdLocal].nodes.comms.position.x === position.x &&
@@ -716,10 +696,9 @@ const handleHackAction = (position) => {
       secondaryColor = "#FF0000";
     }
     
-    // Set the lightning bolt properties with correct positioning
     setLightningBoltProps({ 
-      start: rdPos, 
-      end: targetPos, 
+      start: start, 
+      end: end, 
       color1: primaryColor, 
       color2: secondaryColor 
     });
@@ -1129,12 +1108,7 @@ const handleHackAction = (position) => {
             width={GRID_SIZE * 2 * CELL_SIZE}
             height={GRID_SIZE * 2 * CELL_SIZE}
             className="game-board"
-            viewBox={`
-		    ${-((GRID_SIZE * 2 * CELL_SIZE) / 2) +155}
-		    ${-((GRID_SIZE * 2 * CELL_SIZE) / 4) - 100}
-		    ${GRID_SIZE * 2 * CELL_SIZE + 150}
-		    ${GRID_SIZE * 2 * CELL_SIZE + 100}
-		  `}
+            viewBox={`0 0 ${GRID_SIZE * 2 * CELL_SIZE} ${GRID_SIZE * 2 * CELL_SIZE}`}
             preserveAspectRatio="xMidYMid meet"
           >
             {renderBoard(
@@ -1167,16 +1141,26 @@ const handleHackAction = (position) => {
       {renderResultModal()}
       {/* LightningBolt integration */}
       {lightningBoltProps && (
-        <LightningBolt
-          start={lightningBoltProps.start}
-          end={lightningBoltProps.end}
-          color1={lightningBoltProps.color1}
-          color2={lightningBoltProps.color2}
-          onComplete={() => setLightningBoltProps(null)}
-        />
-      )}
-    </div>
-  );
+  <div className="lightning-container" style={{ 
+    position: 'absolute', 
+    top: 0, 
+    left: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: 1000
+  }}>
+    <LightningBolt
+      start={lightningBoltProps.start}
+      end={lightningBoltProps.end}
+      color1={lightningBoltProps.color1}
+      color2={lightningBoltProps.color2}
+      onComplete={() => setLightningBoltProps(null)}
+    />
+  </div>
+)}
+</div>
+);
 };
 
 export default NoiseBeforeDefeat;

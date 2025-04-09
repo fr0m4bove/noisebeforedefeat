@@ -1,169 +1,149 @@
 /* FriendsList.css */
 .friends-list {
   width: 100%;
-  background-color: #2d2d3a;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #2C3E50;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 20px;
+  color: #ECF0F1;
 }
 
 .friends-tabs {
   display: flex;
-  background-color: #3d3d4a;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #34495E;
 }
 
 .tab-button {
   flex: 1;
   padding: 10px;
-  border: none;
   background-color: transparent;
-  color: #E9D8A1;
+  border: none;
+  color: #BDC3C7;
   cursor: pointer;
-  transition: background-color 0.2s;
-  font-family: 'Exo 2', sans-serif;
   position: relative;
-}
-
-.tab-button:hover {
-  background-color: #4d4d5a;
+  transition: color 0.3s ease;
 }
 
 .tab-button.active {
-  background-color: #5050ff;
-  color: white;
+  color: #E9D8A1;
+  font-weight: bold;
 }
 
-.count {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #cc4040;
+.tab-button .count {
+  background-color: #E74C3C;
   color: white;
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 2px 6px;
+  font-size: 0.7em;
+  margin-left: 5px;
 }
 
 .friends-content {
-  padding: 15px;
-  max-height: 350px;
-  overflow-y: auto;
+  padding: 0 10px;
 }
 
 .error-message {
-  color: #e57373;
+  color: #E74C3C;
+  background-color: rgba(231, 76, 60, 0.1);
   padding: 10px;
-  margin-bottom: 10px;
-  background-color: rgba(229, 115, 115, 0.1);
   border-radius: 4px;
+  margin-bottom: 15px;
   text-align: center;
 }
 
 .success-message {
-  color: #81c784;
+  color: #2ECC71;
+  background-color: rgba(46, 204, 113, 0.1);
   padding: 10px;
-  margin-bottom: 10px;
-  background-color: rgba(129, 199, 132, 0.1);
   border-radius: 4px;
+  margin-bottom: 15px;
   text-align: center;
 }
 
 .empty-list {
-  color: #aaa;
+  color: #BDC3C7;
   text-align: center;
-  font-style: italic;
+  padding: 20px;
 }
 
 .friends-items, .request-items, .search-results {
-  list-style: none;
+  list-style-type: none;
   padding: 0;
-  margin: 0;
 }
 
 .friend-item, .request-item, .search-result-item {
   display: flex;
   justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid #2d2d3a;
   align-items: center;
-}
-
-.friend-item:last-child, .request-item:last-child, .search-result-item:last-child {
-  border-bottom: none;
+  background-color: #34495E;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .friend-info, .request-info, .user-info {
-  display: flex;
-  flex-direction: column;
+  flex-grow: 1;
 }
 
 .friend-name, .request-name, .user-name {
-  font-weight: bold;
-  color: #E9D8A1;
+  color: #ECF0F1;
 }
 
 .friend-status, .request-time {
-  font-size: 12px;
-  color: #aaa;
-  margin-top: 4px;
+  color: #BDC3C7;
+  font-size: 0.8em;
 }
 
 .friend-actions, .request-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+}
+
+.invite-button, .remove-button, 
+.accept-button, .reject-button, 
+.send-request-button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .invite-button, .accept-button, .send-request-button {
-  background-color: #5050ff;
+  background-color: #2ECC71;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.invite-button:hover, .accept-button:hover, .send-request-button:hover {
-  background-color: #4040cc;
 }
 
 .remove-button, .reject-button {
-  background-color: #e74c3c;
+  background-color: #E74C3C;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.remove-button:hover, .reject-button:hover {
-  background-color: #c0392b;
 }
 
 .search-container {
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .friend-email-input {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid rgba(233, 216, 161, 0.3);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #E9D8A1;
-  font-family: 'Exo 2', sans-serif;
+  flex-grow: 1;
+  padding: 10px;
+  background-color: #34495E;
+  border: 1px solid #45637D;
+  color: #ECF0F1;
+  border-radius: 4px 0 0 4px;
 }
 
-.friend-email-input:focus {
-  outline: none;
-  border-color: #E9D8A1;
+.send-request-button {
+  padding: 10px 15px;
+  background-color: #3498DB;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+}
+
+.send-request-button:disabled {
+  background-color: #7F8C8D;
+  cursor: not-allowed;
 }

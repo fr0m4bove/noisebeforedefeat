@@ -1,6 +1,6 @@
 // FriendsList.jsx
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, onValue, push, set, update, remove } from 'firebase/database';
+import { getDatabase, ref, onValue, push, set, update, remove, get } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import './FriendsList.css';
 
@@ -67,11 +67,12 @@ export const FriendsList = ({ currentUser }) => {
     setErrorMessage('');
     setSearchResults([]);
     
-    // Get all users and filter by username (in a real app, you'd use a serverless function for this)
-    const usersRef = ref(db, 'users');
-    onValue(usersRef, (snapshot) => {
-      const usersData = snapshot.val();
-      if (usersData) {
+    try {
+      const usersRef = ref(db, 'users');
+      const snapshot = await get(usersRef);
+      
+      if (snapshot.exists()) {
+        const usersData = snapshot.val();
         const filteredUsers = Object.keys(usersData)
           .filter(key => key !== currentUser.uid) // Exclude current user
           .map(key => ({
@@ -79,110 +80,134 @@ export const FriendsList = ({ currentUser }) => {
             ...usersData[key].profile
           }))
           .filter(user => 
-            user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())
+            user.username && 
+            user.username.toLowerCase().includes(searchTerm.toLowerCase())
           );
         
         setSearchResults(filteredUsers);
+        
         if (filteredUsers.length === 0) {
           setErrorMessage('No users found matching that username.');
         }
       } else {
         setErrorMessage('No users found.');
       }
+    } catch (error) {
+      console.error('Search error:', error);
+      setErrorMessage('An error occurred while searching.');
+    } finally {
       setIsSearching(false);
-    }, {
-      onlyOnce: true
-    });
+    }
   };
   
   // Send friend request
   const sendFriendRequest = async (recipientId, recipientUsername) => {
     if (!currentUser) return;
     
-    // Add to recipient's pending requests
-    const recipientRequestRef = ref(db, `friendRequests/${recipientId}/pending/${currentUser.uid}`);
-    set(recipientRequestRef, {
-      uid: currentUser.uid,
-      username: currentUser.displayName || 'Unknown User',
-      timestamp: new Date().toISOString()
-    });
-    
-    // Add to sender's sent requests
-    const senderRequestRef = ref(db, `friendRequests/${currentUser.uid}/sent/${recipientId}`);
-    set(senderRequestRef, {
-      uid: recipientId,
-      username: recipientUsername,
-      timestamp: new Date().toISOString()
-    });
-    
-    setSuccessMessage(`Friend request sent to ${recipientUsername}`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      // Add to recipient's pending requests
+      const recipientRequestRef = ref(db, `friendRequests/${recipientId}/pending/${currentUser.uid}`);
+      await set(recipientRequestRef, {
+        uid: currentUser.uid,
+        username: currentUser.displayName || 'Unknown User',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Add to sender's sent requests
+      const senderRequestRef = ref(db, `friendRequests/${currentUser.uid}/sent/${recipientId}`);
+      await set(senderRequestRef, {
+        uid: recipientId,
+        username: recipientUsername,
+        timestamp: new Date().toISOString()
+      });
+      
+      setSuccessMessage(`Friend request sent to ${recipientUsername}`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      setErrorMessage('Failed to send friend request.');
+    }
   };
   
   // Accept friend request
   const acceptFriendRequest = async (requesterId, requesterUsername) => {
     if (!currentUser) return;
     
-    // Add to current user's friends list
-    const currentUserFriendRef = ref(db, `friends/${currentUser.uid}/${requesterId}`);
-    set(currentUserFriendRef, {
-      uid: requesterId,
-      username: requesterUsername,
-      status: 'friend',
-      timestamp: new Date().toISOString()
-    });
-    
-    // Add to requester's friends list
-    const requesterFriendRef = ref(db, `friends/${requesterId}/${currentUser.uid}`);
-    set(requesterFriendRef, {
-      uid: currentUser.uid,
-      username: currentUser.displayName || 'Unknown User',
-      status: 'friend',
-      timestamp: new Date().toISOString()
-    });
-    
-    // Remove from pending requests
-    const pendingRequestRef = ref(db, `friendRequests/${currentUser.uid}/pending/${requesterId}`);
-    remove(pendingRequestRef);
-    
-    // Remove from sender's sent requests
-    const sentRequestRef = ref(db, `friendRequests/${requesterId}/sent/${currentUser.uid}`);
-    remove(sentRequestRef);
-    
-    setSuccessMessage(`Friend request from ${requesterUsername} accepted`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      // Add to current user's friends list
+      const currentUserFriendRef = ref(db, `friends/${currentUser.uid}/${requesterId}`);
+      await set(currentUserFriendRef, {
+        uid: requesterId,
+        username: requesterUsername,
+        status: 'friend',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Add to requester's friends list
+      const requesterFriendRef = ref(db, `friends/${requesterId}/${currentUser.uid}`);
+      await set(requesterFriendRef, {
+        uid: currentUser.uid,
+        username: currentUser.displayName || 'Unknown User',
+        status: 'friend',
+        timestamp: new Date().toISOString()
+      });
+      
+      // Remove from pending requests
+      const pendingRequestRef = ref(db, `friendRequests/${currentUser.uid}/pending/${requesterId}`);
+      await remove(pendingRequestRef);
+      
+      // Remove from sender's sent requests
+      const sentRequestRef = ref(db, `friendRequests/${requesterId}/sent/${currentUser.uid}`);
+      await remove(sentRequestRef);
+      
+      setSuccessMessage(`Friend request from ${requesterUsername} accepted`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      setErrorMessage('Failed to accept friend request.');
+    }
   };
   
   // Reject friend request
   const rejectFriendRequest = async (requesterId) => {
     if (!currentUser) return;
     
-    // Remove from pending requests
-    const pendingRequestRef = ref(db, `friendRequests/${currentUser.uid}/pending/${requesterId}`);
-    remove(pendingRequestRef);
-    
-    // Remove from sender's sent requests
-    const sentRequestRef = ref(db, `friendRequests/${requesterId}/sent/${currentUser.uid}`);
-    remove(sentRequestRef);
-    
-    setSuccessMessage('Friend request rejected');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      // Remove from pending requests
+      const pendingRequestRef = ref(db, `friendRequests/${currentUser.uid}/pending/${requesterId}`);
+      await remove(pendingRequestRef);
+      
+      // Remove from sender's sent requests
+      const sentRequestRef = ref(db, `friendRequests/${requesterId}/sent/${currentUser.uid}`);
+      await remove(sentRequestRef);
+      
+      setSuccessMessage('Friend request rejected');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
+      setErrorMessage('Failed to reject friend request.');
+    }
   };
   
   // Remove friend
   const removeFriend = async (friendId, friendUsername) => {
     if (!currentUser) return;
     
-    // Remove from current user's friends list
-    const currentUserFriendRef = ref(db, `friends/${currentUser.uid}/${friendId}`);
-    remove(currentUserFriendRef);
-    
-    // Remove from friend's friends list
-    const friendRef = ref(db, `friends/${friendId}/${currentUser.uid}`);
-    remove(friendRef);
-    
-    setSuccessMessage(`${friendUsername} removed from friends`);
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      // Remove from current user's friends list
+      const currentUserFriendRef = ref(db, `friends/${currentUser.uid}/${friendId}`);
+      await remove(currentUserFriendRef);
+      
+      // Remove from friend's friends list
+      const friendRef = ref(db, `friends/${friendId}/${currentUser.uid}`);
+      await remove(friendRef);
+      
+      setSuccessMessage(`${friendUsername} removed from friends`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error removing friend:', error);
+      setErrorMessage('Failed to remove friend.');
+    }
   };
   
   return (
@@ -304,7 +329,9 @@ export const FriendsList = ({ currentUser }) => {
               </button>
             </div>
             
-            {searchResults.length > 0 && (
+            {isSearching && <p>Searching...</p>}
+            
+            {!isSearching && searchResults.length > 0 && (
               <ul className="search-results">
                 {searchResults.map((user) => (
                   <li key={user.uid} className="search-result-item">

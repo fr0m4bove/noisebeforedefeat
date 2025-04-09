@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import './NoiseBeforeDefeat.css';
 import ChatBox from './ChatBox';
 import FriendsList from './FriendsList';
-import LightningBolt from './LightningBolt';
+//import LightningBolt from './LightningBolt';
 import { renderBoard, renderInfantry, renderLongRange, renderNode } from './GameRenderers';
 import {
   calculateDamage,

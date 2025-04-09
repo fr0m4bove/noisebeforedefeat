@@ -247,6 +247,21 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     return false;
   };
 
+  const adjustedGridToSvg = (x, y) => {
+  // First get the base coordinates from your existing function
+  const { x: baseX, y: baseY } = gridToSvg(x, y);
+  
+  // You may need to adjust these values based on your specific board layout
+  // These offsets should account for any manual adjustments you made to the board position
+  const offsetX = 0; // Adjust this value if needed
+  const offsetY = 0; // Adjust this value if needed
+  
+  return { 
+    x: baseX + offsetX, 
+    y: baseY + offsetY 
+  };
+};
+
 // Set the selected action
   const handleActionSelection = (action) => {
     setGameState(prev => {
@@ -677,8 +692,8 @@ const handleHackAction = (position) => {
     const svgRect = svgElement ? svgElement.getBoundingClientRect() : null;
     
     // Convert grid positions to SVG coordinates
-    const { x: rdX, y: rdY } = gridToSvg(rdNode.position.x, rdNode.position.y);
-    const { x: targetX, y: targetY } = gridToSvg(position.x, position.y);
+    const { x: rdX, y: rdY } = adjustedGridToSvg(rdNode.position.x, rdNode.position.y);
+    const { x: targetX, y: targetY } = adjustedGridToSvg(position.x, position.y);
     
     // Create start and end points based on actual SVG element position
     const start = { x: rdX, y: rdY };

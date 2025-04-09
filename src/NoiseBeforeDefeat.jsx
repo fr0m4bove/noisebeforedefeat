@@ -1117,8 +1117,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       </div>
       {renderSplitPopup()}
       {renderResultModal()}
-      {/* LightningBolt integration (if enabled, uncomment the following) */}
-      {/* 
+      {/* LightningBolt integration (if enabled, uncomment the following) */} 
       {lightningBoltProps && (
         <LightningBolt
           start={lightningBoltProps.start}
@@ -1128,7 +1127,6 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           onComplete={() => setLightningBoltProps(null)}
         />
       )}
-      */}
     </div>
   );
 };

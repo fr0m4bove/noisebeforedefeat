@@ -14,7 +14,7 @@ import { calculateDamage, isInAttackRange, isCenterSquare, getValidMoves, isVali
 
 import { handleAttack, handleHack, handleSurroundAttack, findSurroundingAttackers, findAttackTargets } from './CombatHandlers';
 
-import { FriendsList } from './FriendsList';
+import  FriendsList  from './FriendsList';
 
 
 

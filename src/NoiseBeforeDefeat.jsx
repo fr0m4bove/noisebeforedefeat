@@ -141,7 +141,6 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     gameLogRef.current = gameState.gameLog;
   }, [gameState.gameLog]);
   
-  // (End of Part 1)
   // Process end of turn and apply effects
   const processTurnEnd = (state) => {
     // Apply center square IP bonus
@@ -234,7 +233,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     });
   }, [gameMode]);
 
-  // Check if a cell is occupied (secondary check)
+  // Check if a cell is occupied
   const isCellOccupied = (x, y) => {
     for (const playerId of ['p1', 'p2']) {
       if (gameState.players[playerId].infantry.some(inf => inf.position.x === x && inf.position.y === y)) return true;
@@ -248,7 +247,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     return false;
   };
 
-  // Set the selected action
+// Set the selected action
   const handleActionSelection = (action) => {
     setGameState(prev => {
       if (prev.selectedAction === action) {
@@ -281,17 +280,16 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     setGameState(prev => {
       const playerId = prev.activePlayer;
       let newState = { ...prev };
+      
+      // Just set an animation flag, no need for from/to positions
       setAnimations(anims => ({
         ...anims,
         [`move-${piece.id}`]: {
           effect: 'move',
-          from: piece.type === 'infantry'
-            ? prev.players[playerId].infantry.find(i => i.id === piece.id).position
-            : prev.players[playerId].longRange.position,
-          to: newPosition,
           duration: MOVE_ANIMATION_DURATION
         }
       }));
+      
       if (piece.type === 'infantry') {
         newState.players[playerId].infantry = prev.players[playerId].infantry.map(inf => {
           if (inf.id === piece.id) {
@@ -305,6 +303,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           position: newPosition
         };
       }
+      
       if (isCenterSquare(newPosition)) {
         newState.centerControllers = {
           ...prev.centerControllers,
@@ -318,10 +317,12 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           `${newState.players[playerId].username} now controls the center square`
         );
       }
+      
       newState.currentTurnMoves = prev.currentTurnMoves + 1;
       newState.selectedPiece = null;
       newState.validMoves = [];
       newState.selectedAction = null;
+      
       if (newState.gameId && opponentId) {
         const gameStateRef = ref(db, `games/${newState.gameId}/state`);
         update(gameStateRef, {
@@ -329,8 +330,18 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
           lastUpdateTime: new Date().getTime()
         });
       }
+      
       return newState;
     });
+    
+    // Clear animations after duration
+    setTimeout(() => {
+      setAnimations(anims => {
+        const newAnims = { ...anims };
+        delete newAnims[`move-${piece.id}`];
+        return newAnims;
+      });
+    }, MOVE_ANIMATION_DURATION);
   };
 
   // Create a split unit from the original
@@ -519,16 +530,16 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
         handleMoveAction(position);
         break;
       case 'attack':
-        handleAttackAction(position, gameState, setGameState, setAnimations, calculateDamage, isInAttackRange, isCenterSquare, findAttackTargets);
+        handleAttackAction(position);
         break;
       case 'hack':
-        handleHackAction(position, gameState, setGameState, setAnimations, HACK_COST);
+        handleHackAction(position);
         break;
       case 'split':
         handleSplitAction(position);
         break;
       case 'surroundAttack':
-        handleSurroundAttackSelection(position, gameState, setGameState, findSurroundingAttackers, handleSurroundAttack);
+        handleSurroundAttackSelection(position);
         break;
       default:
         handlePieceSelection(position);
@@ -536,7 +547,6 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     }
   };
 
-  // (End of Part 2)
   // Handle ready button click
   const handleReadyClick = () => {
     setGameState(prev => {
@@ -574,136 +584,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     setNewChatMessage('');
   };
 
-  // Effect for checking if both players are ready
-  useEffect(() => {
-    const { p1, p2 } = gameState.players;
-    if (p1.ready && p2.ready && gameState.phase === "planning") {
-      executeAllMoves();
-    }
-  }, [gameState.players.p1.ready, gameState.players.p2.ready, executeAllMoves, gameState.phase, gameState.players]);
-
-  // Effect for animation cleanup
-  useEffect(() => {
-    const animationTimeout = setTimeout(() => {
-      if (Object.keys(animations).length > 0) {
-        setAnimations({});
-      }
-    }, MOVE_ANIMATION_DURATION);
-    return () => clearTimeout(animationTimeout);
-  }, [animations]);
-
-  // Effect for turn timer
-  useEffect(() => {
-    if (gameState.phase === "planning" && gameState.timer !== null) {
-      timerRef.current = setInterval(() => {
-        setGameState(prev => {
-          if (prev.timer <= 1) {
-            clearInterval(timerRef.current);
-            return {
-              ...prev,
-              timer: 0,
-              players: {
-                ...prev.players,
-                [prev.activePlayer]: {
-                  ...prev.players[prev.activePlayer],
-                  ready: true
-                }
-              }
-            };
-          }
-          return { ...prev, timer: prev.timer - 1 };
-        });
-      }, 1000);
-      return () => clearInterval(timerRef.current);
-    }
-  }, [gameState.phase, gameState.timer, gameState.activePlayer]);
-
-  // Effect for game end
-  useEffect(() => {
-    if (gameState.phase === 'gameOver' && gameState.winner && !showResultModal) {
-      const winnerId = gameState.winner;
-      const loserId = winnerId === 'p1' ? 'p2' : 'p1';
-      const winnerGrade = gradePerformance(gameState.players[winnerId], gameState.players[loserId], true);
-      const loserGrade = gradePerformance(gameState.players[loserId], gameState.players[winnerId], false);
-      const eloChange = calculateEloAdjustment(gameState.players[winnerId], gameState.players[loserId]);
-      setGameState(prev => {
-        const newConsecutiveLosses = loserId === prev.activePlayer ?
-          prev.players[loserId].consecutiveLosses + 1 : 0;
-        const newState = {
-          ...prev,
-          players: {
-            ...prev.players,
-            [winnerId]: {
-              ...prev.players[winnerId],
-              elo: prev.players[winnerId].elo + eloChange,
-              consecutiveLosses: 0,
-              performance: {
-                ...prev.players[winnerId].performance,
-                wins: prev.players[winnerId].performance.wins + 1,
-                rating: winnerGrade
-              }
-            },
-            [loserId]: {
-              ...prev.players[loserId],
-              elo: Math.max(0, prev.players[loserId].elo - eloChange),
-              consecutiveLosses: newConsecutiveLosses,
-              performance: {
-                ...prev.players[loserId].performance,
-                losses: prev.players[loserId].performance.losses + 1,
-                rating: loserGrade
-              }
-            }
-          }
-        };
-        // Firebase updates (if applicable) can be added here.
-        return newState;
-      });
-      saveGameLog();
-      setShowResultModal(true);
-      if (onGameEnd) {
-        onGameEnd({
-          winner: gameState.players[winnerId].username,
-          loser: gameState.players[loserId].username,
-          winnerElo: gameState.players[winnerId].elo + eloChange,
-          loserElo: Math.max(0, gameState.players[loserId].elo - eloChange),
-          eloChange,
-          winnerGrade,
-          loserGrade
-        });
-      }
-    }
-  }, [gameState.phase, gameState.winner, gameState.players, showResultModal, onGameEnd, opponentId]);
-
-  // Effect for Firebase multiplayer game setup
-  useEffect(() => {
-    if (!auth.currentUser || !gameState.gameId) return;
-    const gameStateRef = ref(db, `games/${gameState.gameId}/state`);
-    const unsubscribe = onValue(gameStateRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        if (!gameState.lastUpdateTime || data.lastUpdateTime > gameState.lastUpdateTime) {
-          setGameState(data);
-        }
-      }
-    });
-    const chatRef = ref(db, `games/${gameState.gameId}/chat`);
-    const chatUnsubscribe = onValue(chatRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const chatArray = Object.keys(data).map(key => ({
-          ...data[key],
-          id: key
-        }));
-        setChatMessages(chatArray);
-      }
-    });
-    return () => {
-      unsubscribe();
-      chatUnsubscribe();
-    };
-  }, [gameState.gameId]);
-
-  // Handle attack action
+// Handle attack action
   const handleAttackAction = (position) => {
     const playerId = gameState.activePlayer;
     const opponentIdLocal = playerId === 'p1' ? 'p2' : 'p1';
@@ -786,11 +667,10 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
     if (isNode) {
       handleHack(position, gameState, setGameState, setAnimations, HACK_COST);
       // Lightning bolt integration
-      const rdPos = gridToSvg(
-        gameState.players[playerId].nodes.rd.position.x,
-        gameState.players[playerId].nodes.rd.position.y
-      );
+      const rdNode = gameState.players[playerId].nodes.rd;
+      const rdPos = gridToSvg(rdNode.position.x, rdNode.position.y);
       const targetPos = gridToSvg(position.x, position.y);
+      
       let primaryColor, secondaryColor;
       // If targeting comms, use red/green; else red only
       if (gameState.players[opponentIdLocal].nodes.comms &&
@@ -802,7 +682,12 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
         primaryColor = "#FF0000";
         secondaryColor = "#FF0000";
       }
-      setLightningBoltProps({ start: rdPos, end: targetPos, color1: primaryColor, color2: secondaryColor });
+      setLightningBoltProps({ 
+        start: rdPos, 
+        end: targetPos, 
+        color1: primaryColor, 
+        color2: secondaryColor 
+      });
     } else {
       setGameState(prev => ({ ...prev, selectedAction: null }));
     }
@@ -896,6 +781,134 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       handleSurroundAttack(gameState, setGameState, setAnimations, calculateDamage);
     }
   };
+
+  // Effect for checking if both players are ready
+  useEffect(() => {
+    const { p1, p2 } = gameState.players;
+    if (p1.ready && p2.ready && gameState.phase === "planning") {
+      executeAllMoves();
+    }
+  }, [gameState.players.p1.ready, gameState.players.p2.ready, executeAllMoves, gameState.phase, gameState.players]);
+
+  // Effect for animation cleanup
+  useEffect(() => {
+    const animationTimeout = setTimeout(() => {
+      if (Object.keys(animations).length > 0) {
+        setAnimations({});
+      }
+    }, MOVE_ANIMATION_DURATION);
+    return () => clearTimeout(animationTimeout);
+  }, [animations]);
+
+  // Effect for turn timer
+  useEffect(() => {
+    if (gameState.phase === "planning" && gameState.timer !== null) {
+      timerRef.current = setInterval(() => {
+        setGameState(prev => {
+          if (prev.timer <= 1) {
+            clearInterval(timerRef.current);
+            return {
+              ...prev,
+              timer: 0,
+              players: {
+                ...prev.players,
+                [prev.activePlayer]: {
+                  ...prev.players[prev.activePlayer],
+                  ready: true
+                }
+              }
+            };
+          }
+          return { ...prev, timer: prev.timer - 1 };
+        });
+      }, 1000);
+      return () => clearInterval(timerRef.current);
+    }
+  }, [gameState.phase, gameState.timer, gameState.activePlayer]);
+
+  // Effect for game end
+  useEffect(() => {
+    if (gameState.phase === 'gameOver' && gameState.winner && !showResultModal) {
+      const winnerId = gameState.winner;
+      const loserId = winnerId === 'p1' ? 'p2' : 'p1';
+      const winnerGrade = gradePerformance(gameState.players[winnerId], gameState.players[loserId], true);
+      const loserGrade = gradePerformance(gameState.players[loserId], gameState.players[winnerId], false);
+      const eloChange = calculateEloAdjustment(gameState.players[winnerId], gameState.players[loserId]);
+      setGameState(prev => {
+        const newConsecutiveLosses = loserId === prev.activePlayer ?
+          prev.players[loserId].consecutiveLosses + 1 : 0;
+        const newState = {
+          ...prev,
+          players: {
+            ...prev.players,
+            [winnerId]: {
+              ...prev.players[winnerId],
+              elo: prev.players[winnerId].elo + eloChange,
+              consecutiveLosses: 0,
+              performance: {
+                ...prev.players[winnerId].performance,
+                wins: prev.players[winnerId].performance.wins + 1,
+                rating: winnerGrade
+              }
+            },
+            [loserId]: {
+              ...prev.players[loserId],
+              elo: Math.max(0, prev.players[loserId].elo - eloChange),
+              consecutiveLosses: newConsecutiveLosses,
+              performance: {
+                ...prev.players[loserId].performance,
+                losses: prev.players[loserId].performance.losses + 1,
+                rating: loserGrade
+              }
+            }
+          }
+        };
+        return newState;
+      });
+      saveGameLog();
+      setShowResultModal(true);
+      if (onGameEnd) {
+        onGameEnd({
+          winner: gameState.players[winnerId].username,
+          loser: gameState.players[loserId].username,
+          winnerElo: gameState.players[winnerId].elo + eloChange,
+          loserElo: Math.max(0, gameState.players[loserId].elo - eloChange),
+          eloChange,
+          winnerGrade,
+          loserGrade
+        });
+      }
+    }
+  }, [gameState.phase, gameState.winner, gameState.players, showResultModal, onGameEnd, opponentId]);
+
+  // Effect for Firebase multiplayer game setup
+  useEffect(() => {
+    if (!auth.currentUser || !gameState.gameId) return;
+    const gameStateRef = ref(db, `games/${gameState.gameId}/state`);
+    const unsubscribe = onValue(gameStateRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        if (!gameState.lastUpdateTime || data.lastUpdateTime > gameState.lastUpdateTime) {
+          setGameState(data);
+        }
+      }
+    });
+    const chatRef = ref(db, `games/${gameState.gameId}/chat`);
+    const chatUnsubscribe = onValue(chatRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const chatArray = Object.keys(data).map(key => ({
+          ...data[key],
+          id: key
+        }));
+        setChatMessages(chatArray);
+      }
+    });
+    return () => {
+      unsubscribe();
+      chatUnsubscribe();
+    };
+  }, [gameState.gameId]);
 
   // Render action buttons
   const renderActionButtons = () => (
@@ -1081,13 +1094,8 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
             width={GRID_SIZE * 2 * CELL_SIZE}
             height={GRID_SIZE * 2 * CELL_SIZE}
             className="game-board"
-            viewBox={`
-              ${-((GRID_SIZE * 2 * CELL_SIZE) / 2) + 155} 
-              ${-((GRID_SIZE * 2 * CELL_SIZE) / 4) - 100} 
-              ${GRID_SIZE * 2 * CELL_SIZE + 150} 
-              ${GRID_SIZE * 2 * CELL_SIZE + 100}
-            `}
-            preserveAspectRatio="xMidYMin meet"
+            viewBox={`0 0 ${GRID_SIZE * 2 * CELL_SIZE} ${GRID_SIZE * 2 * CELL_SIZE}`}
+            preserveAspectRatio="xMidYMid meet"
           >
             {renderBoard(
               GRID_SIZE,
@@ -1117,7 +1125,7 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
       </div>
       {renderSplitPopup()}
       {renderResultModal()}
-      {/* LightningBolt integration (if enabled, uncomment the following) */} 
+      {/* LightningBolt integration */}
       {lightningBoltProps && (
         <LightningBolt
           start={lightningBoltProps.start}
@@ -1132,4 +1140,3 @@ const NoiseBeforeDefeat = ({ gameMode = "standard", onGameEnd, currentUser }) =>
 };
 
 export default NoiseBeforeDefeat;
-

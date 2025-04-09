@@ -77,8 +77,11 @@ export const getValidMoves = (position, gameState, isCellOccupied, isValidPositi
 export const gridToSvg = (x, y) => {
   const GRID_SIZE = 8;
   const CELL_SIZE = 50;
-  const svgX = (GRID_SIZE / 2 * CELL_SIZE) + (x * CELL_SIZE);
-  const svgY = (GRID_SIZE / 2 * CELL_SIZE) + (y * CELL_SIZE);
+  
+  // Calculate the base SVG coordinates 
+  const svgX = (GRID_SIZE * CELL_SIZE) + (x * CELL_SIZE);
+  const svgY = (GRID_SIZE * CELL_SIZE) + (y * CELL_SIZE);
+  
   return { x: svgX, y: svgY };
 };
 

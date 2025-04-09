@@ -128,13 +128,23 @@ export const renderInfantry = (unit, playerId, gameState, animations, CELL_SIZE,
   const healthColor = healthPercentage > 50 ? "#00CC00" : 
                      healthPercentage > 25 ? "#FFCC00" : "#CC0000";
   
+  // Determine animation class based on the animation type
+  let animationClass = '';
+  if (animation) {
+    if (animation.effect === 'move') {
+      animationClass = 'move-animation';
+    } else if (animation.effect === 'attack') {
+      animationClass = 'attack-animation';
+    }
+  }
+  
   return (
     <g 
       key={unit.id} 
       transform={`translate(${x}, ${y})`}
       onClick={() => handleCellClick(unit.position.x, unit.position.y)}
       style={{ cursor: 'pointer' }}
-      className={animation ? 'attack-animation' : ''}
+      className={animationClass}
     >
       <circle 
         r={CELL_SIZE * 0.4} 
@@ -191,10 +201,20 @@ export const renderLongRange = (unit, playerId, gameState, animations, CELL_SIZE
   
   const highlightWidth = isSelected || isAttackSource || isSurroundAttacker ? 3 : 1;
   
-// Get health percentage for the color
+  // Get health percentage for the color
   const healthPercentage = (unit.hp / unit.maxHp) * 100;
   const healthColor = healthPercentage > 50 ? "#00CC00" : 
                      healthPercentage > 25 ? "#FFCC00" : "#CC0000";
+  
+  // Determine animation class based on the animation type
+  let animationClass = '';
+  if (animation) {
+    if (animation.effect === 'move') {
+      animationClass = 'move-animation';
+    } else if (animation.effect === 'attack') {
+      animationClass = 'attack-animation';
+    }
+  }
   
   return (
     <g 
@@ -202,7 +222,7 @@ export const renderLongRange = (unit, playerId, gameState, animations, CELL_SIZE
       transform={`translate(${x}, ${y})`}
       onClick={() => handleCellClick(unit.position.x, unit.position.y)}
       style={{ cursor: 'pointer' }}
-      className={animation ? 'attack-animation' : ''}
+      className={animationClass}
     >
       <rect 
         x={-CELL_SIZE * 0.35} 
@@ -286,11 +306,20 @@ export const renderNode = (node, nodeType, playerId, animations, CELL_SIZE, hand
     );
   }
   
-
   // Get health percentage for the color
   const healthPercentage = (node.hp / node.maxHp) * 100;
   const healthColor = healthPercentage > 50 ? "#00CC00" : 
                      healthPercentage > 25 ? "#FFCC00" : "#CC0000";
+                     
+  // Determine animation class
+  let animationClass = '';
+  if (animation) {
+    if (animation.effect === 'hack') {
+      animationClass = 'hack-animation';
+    } else {
+      animationClass = 'attack-animation';
+    }
+  }
   
   return (
     <g 
@@ -298,7 +327,7 @@ export const renderNode = (node, nodeType, playerId, animations, CELL_SIZE, hand
       transform={`translate(${x}, ${y})`}
       onClick={() => handleCellClick(node.position.x, node.position.y)}
       style={{ cursor: 'pointer' }}
-      className={animation ? (animation.effect === 'hack' ? 'hack-animation' : 'attack-animation') : ''}
+      className={animationClass}
     >
       {nodeShape}
       {/* Health bar */}
@@ -355,8 +384,8 @@ export const renderCoordinateLabel = (x, y, label, CELL_SIZE) => {
 const gridToSvg = (x, y) => {
   const GRID_SIZE = 8;
   const CELL_SIZE = 50;
-  const svgX = (GRID_SIZE / 2 * CELL_SIZE) + (x * CELL_SIZE);
-  const svgY = (GRID_SIZE / 2 * CELL_SIZE) + (y * CELL_SIZE);
+  const svgX = (GRID_SIZE * CELL_SIZE) + (x * CELL_SIZE);
+  const svgY = (GRID_SIZE * CELL_SIZE) + (y * CELL_SIZE);
   return { x: svgX, y: svgY };
 };
 

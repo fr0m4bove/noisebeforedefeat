@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue, set, remove, get } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
-import { logError, createErrorDiagnostic } from '../utils/logger';
+import { logError, createErrorDiagnostic } from './logger';
 import './FriendsList.css';
 
 export const FriendsList = ({ currentUser }) => {

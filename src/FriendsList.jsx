@@ -75,14 +75,16 @@ export const FriendsList = ({ currentUser }) => {
         const usersData = snapshot.val();
         const filteredUsers = Object.keys(usersData)
           .filter(key => key !== currentUser.uid) // Exclude current user
+          .filter(key => {
+            const userProfile = usersData[key].profile;
+            return userProfile && 
+                   userProfile.username && 
+                   userProfile.username.toLowerCase().includes(searchTerm.toLowerCase());
+          })
           .map(key => ({
             uid: key,
             ...usersData[key].profile
-          }))
-          .filter(user => 
-            user.username && 
-            user.username.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+          }));
         
         setSearchResults(filteredUsers);
         

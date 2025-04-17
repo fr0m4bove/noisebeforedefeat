@@ -1,14 +1,15 @@
-// Dashboard.jsx
-import React, { useState } from 'react';
+// Modified Dashboard.jsx
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import './Dashboard.css';
 import FriendsList from './FriendsList';
-import NoiseBeforeDefeat from './NoiseBeforeDefeat';
+import NoiseBeforeDefeat from './components/NoiseBeforeDefeat';
 
 function Dashboard() {
   const { currentUser } = useAuth();
   const [activeGame, setActiveGame] = useState(null);
   const [showFriendsList, setShowFriendsList] = useState(false);
+  const [gameLoading, setGameLoading] = useState(false);
 
   // Player stats (for demo purposes; you may replace these values with dynamic data)
   const playerStats = {
@@ -21,7 +22,7 @@ function Dashboard() {
   // Game modes available
   const gameModes = [
     {
-      id: 'player-flash',
+      id: 'flash',
       name: '2 Player Flash',
       description: '10 minute games, 40 seconds think limit',
       players: 2,
@@ -42,13 +43,40 @@ function Dashboard() {
 
   // Handle starting a game
   const handlePlayNow = (gameMode) => {
-    setActiveGame(gameMode);
+    setGameLoading(true);
+    
+    // Simulate loading time for WebAssembly module
+    setTimeout(() => {
+      setActiveGame(gameMode);
+      setGameLoading(false);
+    }, 1000);
   };
 
   // Handle exiting a game
   const handleExitGame = () => {
     setActiveGame(null);
   };
+  
+  // Handle game end with results
+  const handleGameEnd = (results) => {
+    console.log("Game ended:", results);
+    // Here you would typically update the player stats
+    // For now, we'll just exit the game
+    setActiveGame(null);
+  };
+
+  // Loading screen for game initialization
+  if (gameLoading) {
+    return (
+      <div className="dashboard-container">
+        <div className="loading-screen">
+          <div className="loading-spinner"></div>
+          <h2>Loading Game...</h2>
+          <p>Initializing WebAssembly core...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -155,7 +183,7 @@ function Dashboard() {
           <div className="game-container">
             <NoiseBeforeDefeat
               gameMode={activeGame}
-              onGameEnd={handleExitGame}
+              onGameEnd={handleGameEnd}
               currentUser={currentUser}
             />
           </div>
@@ -175,4 +203,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-

@@ -2,6 +2,8 @@
 
 import NoiseBeforeDefeatCore from '../public/wasm/noise_before_defeat_core.js';
 
+// GameInterface.js - Bridge between WASM Core and React UI
+
 class GameInterface {
   constructor() {
     this.module = null;
@@ -14,7 +16,9 @@ class GameInterface {
     if (this.isInitialized) return;
 
     try {
-      this.module = await NoiseBeforeDefeatCore();
+      // Import dynamically to avoid issues with webpack
+      const NoiseBeforeDefeatCore = await import('../public/wasm/noise_before_defeat_core.js');
+      this.module = await NoiseBeforeDefeatCore.default();
       this.gameState = new this.module.GameState();
       this.isInitialized = true;
       console.log('Game core initialized successfully');
